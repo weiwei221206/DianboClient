@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Dianbo.Tests</RootNamespace>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+    <!-- 轻量自检程序：不依赖测试框架，便于在离线环境执行。 -->
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../src/Dianbo.App/ViewModels/SearchViewModel.cs" Link="SearchViewModel.cs" />
+    <ProjectReference Include="..\..\src\Dianbo.Core\Dianbo.Core.csproj" />
+    <ProjectReference Include="..\..\src\Dianbo.Infrastructure\Dianbo.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

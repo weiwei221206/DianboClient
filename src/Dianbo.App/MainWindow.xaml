@@ -1,0 +1,2026 @@
+<Window x:Class="Dianbo.App.MainWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" Title="点波音乐">
+  <Window.SystemBackdrop>
+    <MicaBackdrop Kind="BaseAlt" />
+  </Window.SystemBackdrop>
+  <Grid x:Name="Root">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <Grid x:Name="AppTitleBar"
+          Grid.Row="0"
+          Height="48"
+          Background="Transparent"
+          VerticalAlignment="Top">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition x:Name="TitleBarLeftPaddingColumn" Width="0" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition x:Name="TitleBarRightPaddingColumn" Width="0" />
+      </Grid.ColumnDefinitions>
+
+      <StackPanel Grid.Column="1"
+                  x:Name="AppTitleBarBrand"
+                  Orientation="Horizontal"
+                  VerticalAlignment="Center"
+                  Margin="16,0,0,0"
+                  Spacing="12">
+        <Image x:Name="AppTitleBarIcon"
+               Source="Assets/logo.png"
+               Width="16"
+               Height="16"
+               VerticalAlignment="Center"
+               Stretch="Uniform" />
+        <TextBlock x:Name="AppTitleBarText"
+                   Text="点波音乐"
+                   FontSize="12"
+                   FontWeight="Normal"
+                   VerticalAlignment="Center"
+                   Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+      </StackPanel>
+
+      <Border Grid.Column="2" Background="Transparent" />
+    </Grid>
+
+    <NavigationView ItemInvoked="Navigation_ItemInvoked" SelectionChanged="Navigation_SelectionChanged" Expanding="Navigation_Expanding" Collapsed="Navigation_Collapsed" x:Name="Navigation"
+                    Grid.Row="1"
+                    IsTitleBarAutoPaddingEnabled="False"
+                    PaneDisplayMode="Left"
+                    OpenPaneLength="240"
+                    CompactPaneLength="48"
+                    IsPaneToggleButtonVisible="False"
+                    IsBackButtonVisible="Collapsed"
+                    IsSettingsVisible="True"
+                    IsPaneOpen="True"
+                                                        
+                                                                  
+                                                    
+                                                    
+                    AlwaysShowHeader="False">
+      <NavigationView.PaneHeader>
+        <Border Height="6" />
+      </NavigationView.PaneHeader>
+      <NavigationView.MenuItems>
+        <NavigationViewItem x:Name="DiscoverNav" Content="发现音乐" Tag="discover"><NavigationViewItem.Icon><FontIcon Glyph="&#xE80F;" /></NavigationViewItem.Icon></NavigationViewItem>
+        <NavigationViewItem x:Name="SearchNav" Content="搜索" Tag="search" Icon="Find" />
+        <NavigationViewItemSeparator />
+        <NavigationViewItem Loaded="LibraryNav_Loaded" x:Name="LibraryNav" Content="我的音乐" Tag="library" IsExpanded="True"                           >
+          <NavigationViewItem.Icon><FontIcon Glyph="&#xEB51;" /></NavigationViewItem.Icon>
+          <NavigationViewItem.MenuItems>
+            <NavigationViewItem DoubleTapped="NavFond_DoubleTapped" x:Name="NavFond" Content="我喜欢的音乐" Tag="library:fond"                                    >
+              <NavigationViewItem.Icon><FontIcon Glyph="&#xEB52;" /></NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem DoubleTapped="NavRecent_DoubleTapped" x:Name="NavRecent" Content="最近播放" Tag="library:recent"                                      >
+              <NavigationViewItem.Icon><FontIcon Glyph="&#xE823;" /></NavigationViewItem.Icon>
+            </NavigationViewItem>
+          </NavigationViewItem.MenuItems>
+        </NavigationViewItem>
+        <NavigationViewItem x:Name="QueueNav" Content="播放队列" Tag="queue"><NavigationViewItem.Icon><FontIcon Glyph="&#xE8FD;" /></NavigationViewItem.Icon></NavigationViewItem>
+      </NavigationView.MenuItems>
+      <NavigationView.FooterMenuItems>
+        <NavigationViewItem x:Name="PlayingNav" Content="正在播放" Tag="playing"><NavigationViewItem.Icon><FontIcon Glyph="&#xE8D6;" /></NavigationViewItem.Icon></NavigationViewItem>
+      </NavigationView.FooterMenuItems>
+
+      <NavigationView.PaneFooter>
+        <StackPanel Margin="4,0,4,8">
+          <NavigationViewItemSeparator Margin="-4,0,-4,6" />
+          <Button Click="PaneAccount_Click" x:Name="PaneAccount" Style="{StaticResource PaneAccountButton}"                           AutomationProperties.Name="登录与账号" ToolTipService.ToolTip="登录与账号">
+            <Grid ColumnSpacing="12">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <Border x:Name="PaneAccountAvatarBorder" Width="40" Height="40" CornerRadius="20" Background="{ThemeResource ControlFillColorDefaultBrush}" BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}" BorderThickness="1">
+                <FontIcon x:Name="PaneAccountAvatarIcon" Glyph="&#xE77B;" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+              </Border>
+              <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                <TextBlock x:Name="PaneAccountTitle" Text="未登录" FontSize="14" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                <TextBlock x:Name="PaneAccountDetail" Text="登录后同步喜欢的音乐" FontSize="12" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+              </StackPanel>
+            </Grid>
+          </Button>
+        </StackPanel>
+      </NavigationView.PaneFooter>
+
+      <Grid x:Name="ContentRootGrid">
+        <Grid.RowDefinitions><RowDefinition Height="*" /></Grid.RowDefinitions>
+
+        <Grid.Resources>
+          <ControlTemplate x:Key="SettingsSubHeader" TargetType="ContentControl">
+            <Grid ColumnSpacing="14" Margin="0,0,0,20">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <Button Click="SettingsBack_Click" Style="{StaticResource BackButton}"                            ToolTipService.ToolTip="返回" AutomationProperties.Name="返回">
+                <FontIcon Glyph="&#xE72B;" FontSize="14" />
+              </Button>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <HyperlinkButton Click="SettingsBreadcrumbRoot_Click" Content="设置" Style="{StaticResource BreadcrumbLink}"                                      />
+                <FontIcon Style="{StaticResource BreadcrumbChevron}" />
+                <TextBlock Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Style="{StaticResource BreadcrumbCurrent}" />
+              </StackPanel>
+            </Grid>
+          </ControlTemplate>
+
+
+          <ControlTemplate x:Key="LyricsSettingsSubHeader" TargetType="ContentControl">
+            <Grid ColumnSpacing="14" Margin="0,0,0,20">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <Button Click="SettingsBack_Click" Style="{StaticResource BackButton}" ToolTipService.ToolTip="返回歌词设置" AutomationProperties.Name="返回歌词设置">
+                <FontIcon Glyph="&#xE72B;" FontSize="14" />
+              </Button>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <HyperlinkButton Click="SettingsBreadcrumbSettings_Click" Content="设置" Style="{StaticResource BreadcrumbLink}" />
+                <FontIcon Style="{StaticResource BreadcrumbChevron}" />
+                <HyperlinkButton Click="SettingsBreadcrumbLyrics_Click" Content="歌词" Style="{StaticResource BreadcrumbLink}" />
+                <FontIcon Style="{StaticResource BreadcrumbChevron}" />
+                <TextBlock Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Style="{StaticResource BreadcrumbCurrent}" />
+              </StackPanel>
+            </Grid>
+          </ControlTemplate>
+
+
+          <ControlTemplate x:Key="LibrarySubHeader" TargetType="ContentControl">
+            <Grid ColumnSpacing="14" Margin="0,0,0,20">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <Button Click="LibraryBack_Click" Style="{StaticResource BackButton}"                           ToolTipService.ToolTip="返回" AutomationProperties.Name="返回">
+                <FontIcon Glyph="&#xE72B;" FontSize="14" />
+              </Button>
+              <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <HyperlinkButton Click="LibraryBreadcrumbRoot_Click" Content="我的音乐" Style="{StaticResource BreadcrumbLink}"                                     />
+                <FontIcon Style="{StaticResource BreadcrumbChevron}" />
+                <TextBlock Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Style="{StaticResource BreadcrumbCurrent}" />
+              </StackPanel>
+            </Grid>
+          </ControlTemplate>
+
+          <Style x:Key="SongItemFavoriteButton" TargetType="Button">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+          </Style>
+
+
+          <Style x:Key="SongItemMoreButton" TargetType="Button">
+            <Setter Property="Width" Value="32" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+          </Style>
+
+
+          <Style x:Key="SettingsCard" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="7" />
+          </Style>
+          <Style x:Key="SettingsCardButton" TargetType="Button">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="7" />
+            <Setter Property="UseSystemFocusVisuals" Value="True" />
+          </Style>
+          <Style x:Key="SectionHeader" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="2,10,0,0" />
+          </Style>
+          <Style x:Key="BodyText" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="LineHeight" Value="20" />
+          </Style>
+          <Style x:Key="CaptionText" TargetType="TextBlock" BasedOn="{StaticResource BodyText}">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+          </Style>
+
+  
+          <Style x:Key="SettingsExpanderHeader" TargetType="ToggleButton">
+            <Setter Property="Template">
+              <Setter.Value>
+                <ControlTemplate TargetType="ToggleButton">
+                  <Grid x:Name="Root" Background="Transparent">
+                    <ContentPresenter HorizontalAlignment="Stretch" VerticalAlignment="Center" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+                    <VisualStateManager.VisualStateGroups>
+                      <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal" />
+                        <VisualState x:Name="PointerOver"><Storyboard><DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity" To="0.85" Duration="0:0:0.1" /></Storyboard></VisualState>
+                        <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity" To="0.7" Duration="0:0:0.05" /></Storyboard></VisualState>
+                        <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity" To="0.4" Duration="0" /></Storyboard></VisualState>
+                      </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
+                  </Grid>
+                </ControlTemplate>
+              </Setter.Value>
+            </Setter>
+          </Style>
+          <Style x:Key="SettingsExpander" TargetType="Expander">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="IsTabStop" Value="False" />
+            <Setter Property="Template">
+              <Setter.Value>
+                <ControlTemplate TargetType="Expander">
+                  <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                    <ToggleButton x:Name="ExpanderHeaderButton" Margin="4,0" Padding="12,10" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Style="{StaticResource SettingsExpanderHeader}" Content="{TemplateBinding Header}" ContentTemplate="{TemplateBinding HeaderTemplate}" IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" AutomationProperties.Name="{TemplateBinding AutomationProperties.Name}" />
+                    <ContentPresenter x:Name="ExpanderContent" Grid.Row="1" HorizontalAlignment="Stretch" Visibility="Collapsed" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+                  </Grid>
+                  <VisualStateManager.VisualStateGroups>
+                    <VisualStateGroup x:Name="ExpanderStates">
+                      <VisualState x:Name="Collapsed">
+                        <Storyboard><ObjectAnimationUsingKeyFrames Storyboard.TargetName="ExpanderContent" Storyboard.TargetProperty="Visibility"><DiscreteObjectKeyFrame KeyTime="0" Value="Collapsed" /></ObjectAnimationUsingKeyFrames></Storyboard>
+                      </VisualState>
+                      <VisualState x:Name="Expanded">
+                        <Storyboard><ObjectAnimationUsingKeyFrames Storyboard.TargetName="ExpanderContent" Storyboard.TargetProperty="Visibility"><DiscreteObjectKeyFrame KeyTime="0" Value="Visible" /></ObjectAnimationUsingKeyFrames></Storyboard>
+                      </VisualState>
+                    </VisualStateGroup>
+                  </VisualStateManager.VisualStateGroups>
+                </ControlTemplate>
+              </Setter.Value>
+            </Setter>
+          </Style>
+
+
+          <Style x:Key="BackButton" TargetType="Button">
+            <Setter Property="Width" Value="34" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Template">
+              <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                  <Grid x:Name="Root" Background="Transparent" CornerRadius="4">
+                    <Border x:Name="Hover" Background="{ThemeResource SubtleFillColorSecondaryBrush}" Opacity="0" CornerRadius="4" />
+                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Content="{TemplateBinding Content}" />
+                    <VisualStateManager.VisualStateGroups>
+                      <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal" />
+                        <VisualState x:Name="PointerOver"><Storyboard><DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.1" /></Storyboard></VisualState>
+                        <VisualState x:Name="Pressed"><Storyboard><DoubleAnimation Storyboard.TargetName="Hover" Storyboard.TargetProperty="Opacity" To="0.6" Duration="0:0:0.05" /></Storyboard></VisualState>
+                        <VisualState x:Name="Disabled"><Storyboard><DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="Opacity" To="0.4" Duration="0" /></Storyboard></VisualState>
+                      </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
+                  </Grid>
+                </ControlTemplate>
+              </Setter.Value>
+            </Setter>
+          </Style>
+
+
+          <Style x:Key="BreadcrumbLink" TargetType="HyperlinkButton">
+            <Setter Property="Padding" Value="2,0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Template">
+              <Setter.Value>
+                <ControlTemplate TargetType="HyperlinkButton">
+                  <Grid x:Name="Root" Background="Transparent">
+                    <ContentPresenter x:Name="ContentPresenter"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      ContentTransitions="{TemplateBinding ContentTransitions}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                      Margin="{TemplateBinding Padding}"
+                                      Foreground="{TemplateBinding Foreground}" />
+                    <VisualStateManager.VisualStateGroups>
+                      <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal" />
+                        <VisualState x:Name="PointerOver">
+                          <VisualState.Setters>
+                            <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+                          </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="Pressed">
+                          <VisualState.Setters>
+                            <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+                          </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="Disabled">
+                          <VisualState.Setters>
+                            <Setter Target="ContentPresenter.Foreground" Value="{ThemeResource TextFillColorDisabledBrush}" />
+                          </VisualState.Setters>
+                        </VisualState>
+                      </VisualStateGroup>
+                    </VisualStateManager.VisualStateGroups>
+                  </Grid>
+                </ControlTemplate>
+              </Setter.Value>
+            </Setter>
+          </Style>
+          <Style x:Key="BreadcrumbChevron" TargetType="FontIcon">
+            <Setter Property="Glyph" Value="&#xE76C;" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="8,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+          </Style>
+          <Style x:Key="BreadcrumbCurrent" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}" />
+          </Style>
+
+
+          <Style x:Key="RowTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+          </Style>
+          <Style x:Key="RowDescription" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+          </Style>
+          <Style x:Key="RowIcon" TargetType="FontIcon">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+          </Style>
+          <Style x:Key="RowValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+          </Style>
+          <Style x:Key="Separator" TargetType="Border">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Margin" Value="16,0" />
+            <Setter Property="Background" Value="{ThemeResource DividerStrokeColorDefaultBrush}" />
+          </Style>
+
+          <Style x:Key="SettingsComboBox" TargetType="ComboBox">
+            <Setter Property="Width" Value="230" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="CornerRadius" Value="4" />
+          </Style>
+          <Style x:Key="SettingsToggle" TargetType="ToggleSwitch">
+            <Setter Property="OnContent" Value="" />
+            <Setter Property="OffContent" Value="" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Width" Value="52" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+          </Style>
+          <Style x:Key="SettingsSlider" TargetType="Slider">
+            <Setter Property="MinWidth" Value="180" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+          </Style>
+        </Grid.Resources>
+
+        <ScrollViewer x:Name="MainScrollViewer" Grid.Row="0" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+          <Grid x:Name="PageContentHost" Margin="32,24,36,24">
+            <!-- 发现音乐 -->
+            <StackPanel x:Name="DiscoverPage" Spacing="24" VerticalAlignment="Top">
+              <StackPanel.RenderTransform>
+                <TranslateTransform x:Name="DiscoverTransform" />
+              </StackPanel.RenderTransform>
+
+              <StackPanel Spacing="6">
+                <TextBlock Text="发现音乐" FontSize="30" FontWeight="SemiBold" />
+                <TextBlock Text="从一首歌开始，找到今天的节奏。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+              </StackPanel>
+
+              <InfoBar x:Name="DiscoverOfflineInfoBar" IsOpen="False" Severity="Informational" IsClosable="False"
+                       Title="当前处于离线模式"
+                       Message="网络不可用，无法加载在线推荐内容。您可以前往“我的音乐”畅享本地缓存的歌曲与自建歌单。"
+                       Margin="2,0,2,0">
+                <InfoBar.ActionButton>
+                  <Button Content="重试" Click="RefreshDiscoverSongs_Click" />
+                </InfoBar.ActionButton>
+              </InfoBar>
+
+              <!-- 推荐歌曲板块 -->
+              <StackPanel Spacing="12">
+                <Grid Margin="2,0,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE8D6;" FontSize="18" Foreground="{ThemeResource IconBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="推荐歌曲" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <ProgressRing x:Name="DiscoverSongsRing" IsActive="False" Visibility="Collapsed" Width="14" Height="14" Margin="2,0,0,0" VerticalAlignment="Center" />
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Click="PlayRandomDiscoverSong_Click" x:Name="PlayRandomDiscoverSongBtn" Padding="14,6" CornerRadius="8" ToolTipService.ToolTip="按个性化推荐随机播放单曲，下一首继续推荐新歌">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE8B1;" FontSize="12" />
+                        <TextBlock Text="随机单曲" VerticalAlignment="Center" FontSize="13" />
+                      </StackPanel>
+                    </Button>
+                    <Button Click="PlayAllDiscoverSongs_Click" x:Name="PlayAllDiscoverSongsBtn"                                    Style="{ThemeResource AccentButtonStyle}" Padding="14,6" CornerRadius="8">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE768;" FontSize="12" />
+                        <TextBlock Text="播放全部" VerticalAlignment="Center" FontSize="13" />
+                      </StackPanel>
+                    </Button>
+                    <Button Click="RefreshDiscoverSongs_Click" x:Name="RefreshDiscoverSongsBtn"                                    ToolTipService.ToolTip="换一批推荐歌曲" Padding="12,6" CornerRadius="8">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE72C;" FontSize="12" />
+                        <TextBlock Text="换一批" VerticalAlignment="Center" FontSize="13" />
+                      </StackPanel>
+                    </Button>
+                  </StackPanel>
+                </Grid>
+
+                <Border Style="{StaticResource SettingsCard}" Padding="6">
+                  <ListView ItemClick="DiscoverSong_ItemClick" x:Name="DiscoverSongsList" SelectionMode="None" IsItemClickEnabled="True"
+                            ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                            ScrollViewer.VerticalScrollMode="Disabled">
+                    <ListView.ItemTemplate>
+                      <DataTemplate>
+                        <Grid ColumnSpacing="12" Padding="6,8">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                          </Grid.ColumnDefinitions>
+                          <Border Width="44" Height="44" CornerRadius="6" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                            <Image Source="{Binding CoverUrl}" Stretch="UniformToFill" />
+                          </Border>
+                          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Medium" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Artist}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <Button Click="PlayDiscoverSong_Click" Content="播放"                                Tag="{Binding Id}" Padding="12,5" />
+                            <Button Click="FavoriteSong_Click" Style="{StaticResource SongItemFavoriteButton}"
+                                                              
+                                    Tag="{Binding}"
+                                    ToolTipService.ToolTip="{Binding FavoriteTooltip}"
+                                    AutomationProperties.Name="{Binding FavoriteTooltip}">
+                              <FontIcon Glyph="{Binding FavoriteGlyph}" Foreground="{Binding FavoriteBrush}" FontSize="14" />
+                            </Button>
+                            <Button Click="SongMore_Click" Style="{StaticResource SongItemMoreButton}"
+                                                          
+                                    Tag="{Binding}"
+                                    ToolTipService.ToolTip="更多操作"
+                                    AutomationProperties.Name="更多操作">
+                              <FontIcon Glyph="&#xE712;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                            <TextBlock Text="{Binding DurationText}" FontSize="12" Width="40" TextAlignment="Right"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                          </StackPanel>
+                        </Grid>
+                      </DataTemplate>
+                    </ListView.ItemTemplate>
+                  </ListView>
+                </Border>
+              </StackPanel>
+
+              <!-- 推荐歌单板块 -->
+              <StackPanel Spacing="12">
+                <Grid Margin="2,4,0,0">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE8B9;" FontSize="18" Foreground="{ThemeResource IconBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="精选推荐歌单" FontSize="20" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <ProgressRing x:Name="DiscoverPlaylistsRing" IsActive="False" Visibility="Collapsed" Width="14" Height="14" Margin="2,0,0,0" VerticalAlignment="Center" />
+                  </StackPanel>
+                  <Button Click="RefreshDiscoverPlaylists_Click" Grid.Column="1" x:Name="RefreshDiscoverPlaylistsBtn"                                        ToolTipService.ToolTip="换一批精选歌单" Padding="12,6" CornerRadius="8">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <FontIcon Glyph="&#xE72C;" FontSize="12" />
+                      <TextBlock Text="换一批" VerticalAlignment="Center" FontSize="13" />
+                    </StackPanel>
+                  </Button>
+                </Grid>
+
+                <GridView ItemClick="DiscoverPlaylist_ItemClick" x:Name="DiscoverPlaylistsGrid"
+                          SelectionMode="None"
+                          IsItemClickEnabled="True"
+                                                                
+                          ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                  <GridView.ItemContainerStyle>
+                    <Style TargetType="GridViewItem">
+                      <Setter Property="Margin" Value="0,0,12,12" />
+                      <Setter Property="Padding" Value="0" />
+                      <Setter Property="CornerRadius" Value="10" />
+                    </Style>
+                  </GridView.ItemContainerStyle>
+                  <GridView.ItemTemplate>
+                    <DataTemplate>
+                      <Border Width="160" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="10" Padding="10">
+                        <StackPanel Spacing="8">
+                          <Grid>
+                            <Border Width="140" Height="140" CornerRadius="8" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                              <Image Source="{Binding CoverUrl}" Stretch="UniformToFill" />
+                            </Border>
+                            <Border HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6" Padding="6,2" Background="#90000000" CornerRadius="10">
+                              <StackPanel Orientation="Horizontal" Spacing="4">
+                                <FontIcon Glyph="&#xE768;" FontSize="9" Foreground="White" VerticalAlignment="Center" />
+                                <TextBlock Text="{Binding PlayCountBadge}" FontSize="10" Foreground="White" VerticalAlignment="Center" />
+                              </StackPanel>
+                            </Border>
+                          </Grid>
+                          <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Height="36" LineHeight="18" />
+                          <TextBlock Text="{Binding CreatorName}" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                      </Border>
+                    </DataTemplate>
+                  </GridView.ItemTemplate>
+                </GridView>
+              </StackPanel>
+
+              <!-- 快捷入口 -->
+              <Grid ColumnSpacing="16" Margin="0,4,0,0">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                <Button Click="Navigate_Click" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="20" CornerRadius="12" Tag="library"                       >
+                  <Grid ColumnSpacing="14">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <FontIcon Glyph="&#xEB51;" FontSize="24" Foreground="{ThemeResource IconBrush}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                      <TextBlock Text="我的音乐" FontSize="16" FontWeight="SemiBold" />
+                      <TextBlock Text="我喜欢的音乐、自建歌单与最近播放" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                  </Grid>
+                </Button>
+                <Button Click="Navigate_Click" Grid.Column="1" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Padding="20" CornerRadius="12" Tag="queue"                       >
+                  <Grid ColumnSpacing="14">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <FontIcon Glyph="&#xE8FD;" FontSize="24" Foreground="{ThemeResource IconBrush}" VerticalAlignment="Center" />
+                    <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                      <TextBlock Text="播放队列" FontSize="16" FontWeight="SemiBold" />
+                      <TextBlock Text="首版队列随搜索结果生成" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                  </Grid>
+                </Button>
+              </Grid>
+            </StackPanel>
+
+            <!-- 搜索 -->
+            <StackPanel x:Name="SearchPage" Visibility="Collapsed" Spacing="16" VerticalAlignment="Top">
+              <StackPanel.RenderTransform>
+                <TranslateTransform x:Name="SearchTransform" />
+              </StackPanel.RenderTransform>
+              <StackPanel Spacing="6" Margin="0,0,0,4">
+                <TextBlock Text="搜索" FontSize="30" FontWeight="SemiBold" />
+                <TextBlock Text="搜索歌曲、歌手或专辑。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+              </StackPanel>
+              <AutoSuggestBox QuerySubmitted="Search_Submitted" TextChanged="SearchBox_TextChanged" x:Name="SearchBox" PlaceholderText="搜索歌曲、歌手或专辑" QueryIcon="Find"                                                                       />
+              <StackPanel Orientation="Horizontal" Spacing="10">
+                <ProgressRing x:Name="SearchRing" IsActive="False" Width="18" Height="18" />
+                <TextBlock x:Name="SearchStatusText" Text="下一首喜欢的歌，从这里开始" VerticalAlignment="Center" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+              </StackPanel>
+              <ListView ItemClick="SearchResults_ItemClick" x:Name="SearchResults" SelectionMode="Single" IsItemClickEnabled="True"
+                        ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                        ScrollViewer.VerticalScrollMode="Disabled">
+                <ListView.ItemTemplate>
+                  <DataTemplate>
+                    <Grid ColumnSpacing="12" Padding="4,6">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <Border Width="40" Height="40" CornerRadius="4" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                        <Image Source="{Binding CoverUrl}" Stretch="UniformToFill" />
+                      </Border>
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding Artist}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <Button Click="PlayResult_Click" Content="播放"                          Tag="{Binding Id}" />
+                        <Button Click="FavoriteSong_Click" Style="{StaticResource SongItemFavoriteButton}"
+                                                          
+                                Tag="{Binding}"
+                                ToolTipService.ToolTip="{Binding FavoriteTooltip}"
+                                AutomationProperties.Name="{Binding FavoriteTooltip}">
+                          <FontIcon Glyph="{Binding FavoriteGlyph}" Foreground="{Binding FavoriteBrush}" FontSize="14" />
+                        </Button>
+                        <Button Click="SongMore_Click" Style="{StaticResource SongItemMoreButton}"
+                                                      
+                                Tag="{Binding}"
+                                ToolTipService.ToolTip="更多操作"
+                                AutomationProperties.Name="更多操作">
+                          <FontIcon Glyph="&#xE712;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </Button>
+                        <TextBlock Text="{Binding DurationText}" FontSize="12" Width="40" TextAlignment="Right"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                      </StackPanel>
+                    </Grid>
+                  </DataTemplate>
+                </ListView.ItemTemplate>
+                <ListView.Footer>
+                  <StackPanel x:Name="SearchListFooter" HorizontalAlignment="Center" Orientation="Horizontal" Spacing="8" Padding="0,12" Visibility="Collapsed">
+                    <ProgressRing x:Name="SearchFooterRing" IsActive="True" Width="16" Height="16" />
+                    <TextBlock x:Name="SearchFooterText" Text="正在加载更多歌曲..." FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                  </StackPanel>
+                </ListView.Footer>
+              </ListView>
+            </StackPanel>
+
+            <!-- 我的音乐 -->
+            <Grid x:Name="LibraryPage" Visibility="Collapsed" VerticalAlignment="Top">
+              <Grid.RenderTransform>
+                <TranslateTransform x:Name="LibraryTransform" />
+              </Grid.RenderTransform>
+              <Border x:Name="LibLoadingRing" Visibility="Collapsed" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="16" Padding="14,6" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,6,0,0" Canvas.ZIndex="100">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <ProgressRing IsActive="True" Width="14" Height="14" />
+                  <TextBlock x:Name="LibLoadingText" Text="正在加载..." FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+              </Border>
+              <Border Tapped="LibResultPill_Tapped" x:Name="LibResultPill" Visibility="Collapsed" Opacity="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="16" Padding="14,7" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,6,0,0" Canvas.ZIndex="100"                               ToolTipService.ToolTip="点击关闭">
+                <Border.Shadow>
+                  <ThemeShadow />
+                </Border.Shadow>
+                <Border.RenderTransform>
+                  <TranslateTransform x:Name="LibResultPillTransform" Y="-10" />
+                </Border.RenderTransform>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <FontIcon x:Name="LibResultIcon" Glyph="&#xE73E;" FontSize="14" Foreground="{ThemeResource SystemFillColorSuccessBrush}" />
+                  <TextBlock x:Name="LibResultText" Text="" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+              </Border>
+
+              <StackPanel x:Name="LibraryRootPanel" Spacing="4" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="LibRootTransform" />
+                </StackPanel.RenderTransform>
+                <Grid ColumnSpacing="16" Margin="0,0,0,16">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Spacing="6">
+                    <TextBlock Text="我的音乐" FontSize="30" FontWeight="SemiBold" />
+                    <TextBlock Text="我喜欢的音乐、自建歌单与最近播放。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                  </StackPanel>
+                  <Button Click="RefreshLibrary_Click" Grid.Column="1"                              ToolTipService.ToolTip="刷新" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <FontIcon Glyph="&#xE72C;" FontSize="13" />
+                      <TextBlock Text="刷新" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Button>
+                </Grid>
+
+
+                <Button Click="LibCategoryNavigate_Click" Style="{StaticResource SettingsCardButton}" Tag="library:fond"                                   AutomationProperties.Name="我喜欢的音乐" Margin="0,0,0,4">
+                  <Grid Padding="16,14" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border Width="44" Height="44" CornerRadius="8" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                      <FontIcon Glyph="&#xEB51;" FontSize="20" Foreground="{ThemeResource IconBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="我喜欢的音乐" Style="{StaticResource RowTitle}" FontSize="15" />
+                      <TextBlock x:Name="LibRootFondSubtitle" Text="加载中..." Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="我喜欢" Style="{StaticResource RowValue}" Margin="0,0,8,0" />
+                    <FontIcon Grid.Column="3" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
+                  </Grid>
+                </Button>
+
+                <!-- 最近播放 卡片 -->
+                <Button Click="LibCategoryNavigate_Click" Style="{StaticResource SettingsCardButton}" Tag="library:recent"                                   AutomationProperties.Name="最近播放" Margin="0,0,0,16">
+                  <Grid Padding="16,14" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border Width="44" Height="44" CornerRadius="8" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                      <FontIcon Glyph="&#xE823;" FontSize="20" Foreground="{ThemeResource IconBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="最近播放" Style="{StaticResource RowTitle}" FontSize="15" />
+                      <TextBlock x:Name="LibRootRecentSubtitle" Text="0 首历史歌曲" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="历史记录" Style="{StaticResource RowValue}" Margin="0,0,8,0" />
+                    <FontIcon Grid.Column="3" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
+                  </Grid>
+                </Button>
+
+                <!-- 自建歌单分组与新建操作 -->
+                <Grid Margin="2,6,0,8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock x:Name="PlaylistsHeaderSummary" Text="自建歌单" Style="{StaticResource SectionHeader}" VerticalAlignment="Center" Margin="0" />
+                  <Button Click="CreatePlaylist_Click" x:Name="CreatePlaylistButton" Grid.Column="1"                              ToolTipService.ToolTip="新建歌单" VerticalAlignment="Center">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                      <FontIcon Glyph="&#xE710;" FontSize="13" />
+                      <TextBlock Text="新建歌单" VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Button>
+                </Grid>
+
+                <!-- 未登录提示 -->
+                <Border x:Name="LibRootNotSignedInCard" Visibility="Collapsed" Style="{StaticResource SettingsCard}" MinHeight="160">
+                  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                    <FontIcon Glyph="&#xEB51;" FontSize="32" Foreground="{ThemeResource IconBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="登录以同步自建歌单" FontSize="16" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                    <TextBlock Text="登录波点音乐账号后，即可在此查看自建歌单并同步歌曲。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextAlignment="Center" HorizontalAlignment="Center" />
+                    <Button Click="PaneAccount_Click" Content="立即登录"                           Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Center" Padding="20,5" Margin="0,4,0,0" />
+                  </StackPanel>
+                </Border>
+
+                <!-- 自建歌单列表 -->
+                <ListView ItemClick="UserPlaylist_ItemClick" DoubleTapped="UserPlaylistsList_DoubleTapped" x:Name="UserPlaylistsList" SelectionMode="Single" IsItemClickEnabled="True"                                                                                 
+                          ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollMode="Disabled"
+                          Margin="0,0,0,32">
+                  <ListView.ItemTemplate>
+                    <DataTemplate>
+                      <Grid ColumnSpacing="14" Padding="6,8">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="50" Height="50" CornerRadius="6" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                          <Image Source="{Binding CoverUrl}" Stretch="UniformToFill" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+                          <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Text="{Binding DisplaySubtitle}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                      </Grid>
+                    </DataTemplate>
+                  </ListView.ItemTemplate>
+                </ListView>
+              </StackPanel>
+
+              <StackPanel x:Name="LibraryFondPanel" Visibility="Collapsed" Spacing="14" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="LibFondTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl Template="{StaticResource LibrarySubHeader}" Tag="我喜欢的音乐" />
+
+                <!-- 未登录提示 -->
+                <Border x:Name="LibFondNotSignedInCard" Visibility="Collapsed" Style="{StaticResource SettingsCard}" MinHeight="200">
+                  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="14">
+                    <FontIcon Glyph="&#xEB51;" FontSize="36" Foreground="{ThemeResource IconBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="登录以同步音乐资产" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                    <TextBlock Text="登录波点音乐账号后，即可在此查看「我喜欢」歌曲与自建歌单。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextAlignment="Center" HorizontalAlignment="Center" />
+                    <Button Click="PaneAccount_Click" Content="立即登录"                           Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Center" Padding="24,6" Margin="0,4,0,0" />
+                  </StackPanel>
+                </Border>
+
+                <!-- 我喜欢的音乐详情大卡片与歌曲列表 -->
+                <StackPanel x:Name="LibFondContentArea" Spacing="14">
+                  <Border Style="{StaticResource SettingsCard}" Padding="16">
+                    <Grid ColumnSpacing="16">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <Border Width="80" Height="80" CornerRadius="8" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                        <Image x:Name="FondCover" Stretch="UniformToFill" />
+                      </Border>
+                      <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                        <TextBlock x:Name="FondTitle" Text="我喜欢的音乐" FontSize="20" FontWeight="SemiBold" />
+                        <TextBlock x:Name="FondCount" Text="加载中..." FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Button Click="PlayShuffleFond_Click"                               Padding="14,8" ToolTipService.ToolTip="开启随机模式并播放我喜欢的音乐">
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE8B1;" FontSize="13" />
+                            <TextBlock Text="随机播放" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </Button>
+                        <Button Click="PlayAllFond_Click" x:Name="PlayAllFondBtn"                           Style="{ThemeResource AccentButtonStyle}" Padding="16,8">
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE768;" FontSize="13" />
+                            <TextBlock Text="播放全部" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </Button>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                  <ListView ItemClick="FondSong_ItemClick" x:Name="FondSongsList" SelectionMode="Single" IsItemClickEnabled="True"                               
+                            ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                            ScrollViewer.VerticalScrollMode="Disabled"
+                            Margin="0,0,0,48">
+                    <ListView.ItemTemplate>
+                      <DataTemplate>
+                        <Grid ColumnSpacing="12" Padding="4,6">
+                          <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                          </Grid.ColumnDefinitions>
+                          <Border Width="40" Height="40" CornerRadius="4" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                            <Image Source="{Binding CoverUrl}" Stretch="UniformToFill" />
+                          </Border>
+                          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Artist}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                          </StackPanel>
+                          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <Button Click="PlayFondSong_Click" Content="播放"                            Tag="{Binding Id}" />
+                            <Button Click="FavoriteSong_Click" Style="{StaticResource SongItemFavoriteButton}"
+                                                              
+                                    Tag="{Binding}"
+                                    ToolTipService.ToolTip="{Binding FavoriteTooltip}"
+                                    AutomationProperties.Name="{Binding FavoriteTooltip}">
+                              <FontIcon Glyph="{Binding FavoriteGlyph}" Foreground="{Binding FavoriteBrush}" FontSize="14" />
+                            </Button>
+                            <Button Click="SongMore_Click" Style="{StaticResource SongItemMoreButton}"
+                                                          
+                                    Tag="{Binding}"
+                                    ToolTipService.ToolTip="更多操作"
+                                    AutomationProperties.Name="更多操作">
+                              <FontIcon Glyph="&#xE712;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                            <TextBlock Text="{Binding DurationText}" FontSize="12" Width="40" TextAlignment="Right"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                          </StackPanel>
+                        </Grid>
+                      </DataTemplate>
+                    </ListView.ItemTemplate>
+                  </ListView>
+                </StackPanel>
+              </StackPanel>
+
+              <StackPanel x:Name="LibraryRecentPanel" Visibility="Collapsed" Spacing="14" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="LibRecentTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl Template="{StaticResource LibrarySubHeader}" Tag="最近播放" />
+
+                <Border Style="{StaticResource SettingsCard}" Padding="16">
+                  <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="80" Height="80" CornerRadius="8" Background="{ThemeResource SubtleFillColorSecondaryBrush}">
+                      <FontIcon Glyph="&#xE823;" FontSize="32" Foreground="{ThemeResource IconBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                      <TextBlock Text="最近播放" FontSize="20" FontWeight="SemiBold" />
+                      <TextBlock x:Name="RecentCount" Text="0 首历史歌曲" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                      <Button Click="ClearRecent_Click"                           Content="清空历史" Padding="12,8" />
+                      <Button Click="PlayShuffleRecent_Click"                                 Padding="14,8" ToolTipService.ToolTip="开启随机模式并播放最近歌曲">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <FontIcon Glyph="&#xE8B1;" FontSize="13" />
+                          <TextBlock Text="随机播放" VerticalAlignment="Center" />
+                        </StackPanel>
+                      </Button>
+                      <Button Click="PlayAllRecent_Click"                             Style="{ThemeResource AccentButtonStyle}" Padding="16,8">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <FontIcon Glyph="&#xE768;" FontSize="13" />
+                          <TextBlock Text="播放全部" VerticalAlignment="Center" />
+                        </StackPanel>
+                      </Button>
+                    </StackPanel>
+                  </Grid>
+                </Border>
+                <ListView ItemClick="RecentSong_ItemClick" x:Name="RecentSongsList" SelectionMode="Single" IsItemClickEnabled="True"                                 
+                          ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollMode="Disabled"
+                          Margin="0,0,0,48">
+                  <ListView.ItemTemplate>
+                    <DataTemplate>
+                      <Grid ColumnSpacing="12" Padding="4,6">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="40" Height="40" CornerRadius="4" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                          <Image Source="{Binding CoverUrl}" Stretch="UniformToFill" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                          <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Text="{Binding Artist}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                          <Button Click="PlayRecentSong_Click" Content="播放"                              Tag="{Binding Id}" />
+                          <Button Click="FavoriteSong_Click" Style="{StaticResource SongItemFavoriteButton}"
+                                                            
+                                  Tag="{Binding}"
+                                  ToolTipService.ToolTip="{Binding FavoriteTooltip}"
+                                  AutomationProperties.Name="{Binding FavoriteTooltip}">
+                            <FontIcon Glyph="{Binding FavoriteGlyph}" Foreground="{Binding FavoriteBrush}" FontSize="14" />
+                          </Button>
+                          <Button Click="SongMore_Click" Style="{StaticResource SongItemMoreButton}"
+                                                        
+                                  Tag="{Binding}"
+                                  ToolTipService.ToolTip="更多操作"
+                                  AutomationProperties.Name="更多操作">
+                            <FontIcon Glyph="&#xE712;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                          </Button>
+                          <TextBlock Text="{Binding DurationText}" FontSize="12" Width="40" TextAlignment="Right"
+                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                        </StackPanel>
+                      </Grid>
+                    </DataTemplate>
+                  </ListView.ItemTemplate>
+                </ListView>
+              </StackPanel>
+
+              <StackPanel x:Name="LibraryPlaylistPanel" Visibility="Collapsed" Spacing="14" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="LibPlaylistTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl x:Name="PlaylistSubHeaderControl" Template="{StaticResource LibrarySubHeader}" Tag="歌单详情" />
+
+                <Border Style="{StaticResource SettingsCard}" Padding="16">
+                  <Grid ColumnSpacing="16">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Border Width="80" Height="80" CornerRadius="8" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                      <Image x:Name="DetailPlaylistCover" Stretch="UniformToFill" />
+                    </Border>
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="4">
+                      <TextBlock x:Name="DetailPlaylistTitle" FontSize="20" FontWeight="SemiBold" TextWrapping="Wrap" />
+                      <TextBlock x:Name="DetailPlaylistSubtitle" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                      <Button Click="DeleteDetailPlaylist_Click" x:Name="DeleteDetailPlaylistButton"                                    Padding="14,8" ToolTipService.ToolTip="删除当前歌单" Visibility="Collapsed">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <FontIcon Glyph="&#xE74D;" FontSize="13" />
+                          <TextBlock Text="删除歌单" VerticalAlignment="Center" />
+                        </StackPanel>
+                      </Button>
+                      <Button Click="PlayShuffleDetailPlaylist_Click"                                         Padding="14,8" ToolTipService.ToolTip="开启随机模式并播放歌单所有歌曲">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <FontIcon Glyph="&#xE8B1;" FontSize="13" />
+                          <TextBlock Text="随机播放" VerticalAlignment="Center" />
+                        </StackPanel>
+                      </Button>
+                      <Button Click="PlayAllDetailPlaylist_Click"                                     Style="{ThemeResource AccentButtonStyle}" Padding="16,8">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                          <FontIcon Glyph="&#xE768;" FontSize="13" />
+                          <TextBlock Text="播放全部" VerticalAlignment="Center" />
+                        </StackPanel>
+                      </Button>
+                    </StackPanel>
+                  </Grid>
+                </Border>
+
+                <ListView ItemClick="DetailPlaylistSong_ItemClick" x:Name="DetailPlaylistSongsList" SelectionMode="Single" IsItemClickEnabled="True"                                         
+                          ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollMode="Disabled"
+                          Margin="0,0,0,48">
+                  <ListView.ItemTemplate>
+                    <DataTemplate>
+                      <Grid ColumnSpacing="12" Padding="4,6">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Border Width="40" Height="40" CornerRadius="4" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                          <Image Source="{Binding CoverUrl}" Stretch="UniformToFill" />
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+                          <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis" />
+                          <TextBlock Text="{Binding Artist}" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                          <Button Click="PlayDetailSong_Click" Content="播放"                              Tag="{Binding Id}" />
+                          <Button Click="FavoriteSong_Click" Style="{StaticResource SongItemFavoriteButton}"
+                                                            
+                                  Tag="{Binding}"
+                                  ToolTipService.ToolTip="{Binding FavoriteTooltip}"
+                                  AutomationProperties.Name="{Binding FavoriteTooltip}">
+                            <FontIcon Glyph="{Binding FavoriteGlyph}" Foreground="{Binding FavoriteBrush}" FontSize="14" />
+                          </Button>
+                          <Button Click="SongMore_Click" Style="{StaticResource SongItemMoreButton}"
+                                                        
+                                  Tag="{Binding}"
+                                  ToolTipService.ToolTip="更多操作"
+                                  AutomationProperties.Name="更多操作">
+                            <FontIcon Glyph="&#xE712;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                          </Button>
+                          <TextBlock Text="{Binding DurationText}" FontSize="12" Width="40" TextAlignment="Right"
+                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                        </StackPanel>
+                      </Grid>
+                    </DataTemplate>
+                  </ListView.ItemTemplate>
+                </ListView>
+              </StackPanel>
+            </Grid>
+
+            <!-- 播放队列 -->
+            <StackPanel x:Name="QueuePage" Visibility="Collapsed" Spacing="18" VerticalAlignment="Top">
+              <StackPanel.RenderTransform>
+                <TranslateTransform x:Name="QueueTransform" />
+              </StackPanel.RenderTransform>
+
+              <!-- 队列标题区 -->
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="4">
+                  <TextBlock Text="播放队列" FontSize="30" FontWeight="SemiBold" />
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock x:Name="QueueCountText" Text="共 0 首歌曲" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock x:Name="QueuePlayingDot" Text="·" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Visibility="Collapsed" />
+                    <TextBlock x:Name="QueueCurrentPlayingText" Text="" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" FontWeight="SemiBold" Visibility="Collapsed" />
+                  </StackPanel>
+                </StackPanel>
+              </Grid>
+
+              <!-- 队列空状态展示卡片 -->
+              <Border x:Name="QueueEmptyCard" Style="{StaticResource SettingsCard}" MinHeight="360" Padding="32,48">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16" MaxWidth="480">
+                  <Border Width="84" Height="84" CornerRadius="42"
+                          Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                          BorderThickness="1"
+                          HorizontalAlignment="Center">
+                    <FontIcon Glyph="&#xE93C;" FontSize="38"
+                              Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  </Border>
+                  <StackPanel Spacing="6" HorizontalAlignment="Center">
+                    <TextBlock Text="播放队列为空" FontSize="22" FontWeight="SemiBold"
+                               HorizontalAlignment="Center" TextAlignment="Center" />
+                    <TextBlock Text="当前暂无播放或待播放的歌曲。挑选一首喜欢的音乐，开启美妙的声音旅程吧。"
+                               FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               TextWrapping="Wrap" TextAlignment="Center" LineHeight="20" />
+                  </StackPanel>
+                </StackPanel>
+              </Border>
+
+              <StackPanel x:Name="QueueContentArea" Spacing="14" Visibility="Collapsed">
+                <!-- 顶部控制工具栏卡片 -->
+                <Border Style="{StaticResource SettingsCard}" Padding="14,12">
+                  <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 播放模式选择下拉菜单 -->
+                    <Button Grid.Column="0" x:Name="QueuePlayModeMenuBtn" Padding="14,8" ToolTipService.ToolTip="切换播放模式（顺序播放、列表循环、单曲循环、随机播放）">
+                      <Button.Flyout>
+                        <MenuFlyout>
+                          <MenuFlyoutItem Click="QueuePlayModeItem_Click" Text="顺序播放"                                 Tag="Sequential">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xF5E7;" /></MenuFlyoutItem.Icon>
+                          </MenuFlyoutItem>
+                          <MenuFlyoutItem Click="QueuePlayModeItem_Click" Text="列表循环"                                 Tag="RepeatAll">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8EE;" /></MenuFlyoutItem.Icon>
+                          </MenuFlyoutItem>
+                          <MenuFlyoutItem Click="QueuePlayModeItem_Click" Text="单曲循环"                                 Tag="RepeatOne">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8ED;" /></MenuFlyoutItem.Icon>
+                          </MenuFlyoutItem>
+                          <MenuFlyoutItem Click="QueuePlayModeItem_Click" Text="随机播放"                                 Tag="Shuffle">
+                            <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE8B1;" /></MenuFlyoutItem.Icon>
+                          </MenuFlyoutItem>
+                        </MenuFlyout>
+                      </Button.Flyout>
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon x:Name="QueuePlayModeIcon" Glyph="&#xE8EE;" FontSize="13" />
+                        <TextBlock x:Name="QueuePlayModeText" Text="列表循环" VerticalAlignment="Center" />
+                        <FontIcon Glyph="&#xE70D;" FontSize="10" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                      </StackPanel>
+                    </Button>
+
+                    <!-- 定位当前播放 -->
+                    <Button Click="QueueLocateCurrent_Click" Grid.Column="2" x:Name="QueueLocateCurrentBtn"                                  Padding="12,8" ToolTipService.ToolTip="滚动并定位到当前正在播放的歌曲">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE8D6;" FontSize="13" />
+                        <TextBlock Text="定位当前" VerticalAlignment="Center" />
+                      </StackPanel>
+                    </Button>
+
+                    <!-- 清空队列 -->
+                    <Button Click="QueueClear_Click" Grid.Column="3" x:Name="QueueClearBtn"                          Padding="12,8" ToolTipService.ToolTip="清空播放队列中的所有歌曲">
+                      <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE74D;" FontSize="13" />
+                        <TextBlock Text="清空队列" VerticalAlignment="Center" />
+                      </StackPanel>
+                    </Button>
+                  </Grid>
+                </Border>
+
+                <!-- 歌曲列表 -->
+                <ListView ItemClick="QueueSong_ItemClick" x:Name="QueueListView" SelectionMode="Single" IsItemClickEnabled="True"                                
+                          ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                          ScrollViewer.VerticalScrollMode="Disabled"
+                          Margin="0,0,0,48">
+                  <ListView.ItemTemplate>
+                    <DataTemplate>
+                      <Grid ColumnSpacing="12" Padding="4,6">
+                        <Grid.ContextFlyout>
+                          <MenuFlyout>
+                            <MenuFlyoutItem Click="QueueContextPlay_Click" Text="立即播放"                                Tag="{Binding}">
+                              <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE768;" /></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Click="QueueContextRemove_Click" Text="从队列移除"                                  Tag="{Binding}">
+                              <MenuFlyoutItem.Icon><FontIcon Glyph="&#xE711;" /></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutSeparator />
+                            <MenuFlyoutItem Click="FavoriteSong_Click" Text="{Binding FavoriteTooltip}"                            Tag="{Binding}">
+                              <MenuFlyoutItem.Icon><FontIcon Glyph="{Binding FavoriteGlyph}" Foreground="{Binding FavoriteBrush}" /></MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                          </MenuFlyout>
+                        </Grid.ContextFlyout>
+
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="36" />
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center">
+                          <TextBlock Text="{Binding DisplayIndex}" FontSize="12"
+                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     Visibility="{Binding IndexVisibility}" />
+                          <FontIcon Glyph="&#xE767;" FontSize="14"
+                                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                                    Visibility="{Binding PlayingIndicatorVisibility}" />
+                        </Grid>
+
+                        <!-- 专辑封面 -->
+                        <Border Grid.Column="1" Width="40" Height="40" CornerRadius="4" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                          <Image Source="{Binding CoverUrl}" Stretch="UniformToFill" />
+                        </Border>
+
+                        <!-- 歌名与歌手 -->
+                        <StackPanel Grid.Column="2" VerticalAlignment="Center" Spacing="2">
+                          <TextBlock Text="{Binding Name}" FontSize="14" TextTrimming="CharacterEllipsis"
+                                     Foreground="{Binding TitleForeground}" FontWeight="{Binding TitleFontWeight}" />
+                          <TextBlock Text="{Binding Artist}" FontSize="12"
+                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+
+                        <!-- 操作按钮区 -->
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                          <Button Click="PlayQueueSong_Click" Content="播放"                             Tag="{Binding}" />
+                          <Button Click="FavoriteSong_Click" Style="{StaticResource SongItemFavoriteButton}"
+                                                            
+                                  Tag="{Binding}"
+                                  ToolTipService.ToolTip="{Binding FavoriteTooltip}"
+                                  AutomationProperties.Name="{Binding FavoriteTooltip}">
+                            <FontIcon Glyph="{Binding FavoriteGlyph}" Foreground="{Binding FavoriteBrush}" FontSize="14" />
+                          </Button>
+                          <Button Click="SongMore_Click" Style="{StaticResource SongItemMoreButton}"
+                                                        
+                                  Tag="{Binding}"
+                                  ToolTipService.ToolTip="更多操作"
+                                  AutomationProperties.Name="更多操作">
+                            <FontIcon Glyph="&#xE712;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                          </Button>
+                          <Button Click="RemoveQueueSong_Click" Style="{StaticResource SongItemFavoriteButton}"
+                                                               
+                                  Tag="{Binding}"
+                                  ToolTipService.ToolTip="从队列移除"
+                                  AutomationProperties.Name="从队列移除">
+                            <FontIcon Glyph="&#xE711;" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+                          </Button>
+                          <TextBlock Text="{Binding DurationText}" FontSize="12" Width="40" TextAlignment="Right"
+                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="2,0,0,0" />
+                        </StackPanel>
+                      </Grid>
+                    </DataTemplate>
+                  </ListView.ItemTemplate>
+                </ListView>
+              </StackPanel>
+            </StackPanel>
+
+
+
+            <!-- 设置 -->
+            <Grid x:Name="SettingsPage" Visibility="Collapsed" VerticalAlignment="Top">
+              <Grid.RenderTransform>
+                <TranslateTransform x:Name="SettingsTransform" />
+              </Grid.RenderTransform>
+              <StackPanel x:Name="SettingsCategories" Spacing="4" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="CategoriesTransform" />
+                </StackPanel.RenderTransform>
+                <StackPanel Spacing="6" Margin="0,0,0,16">
+                  <TextBlock Text="设置" FontSize="30" FontWeight="SemiBold" />
+                  <TextBlock Text="管理点波音乐的偏好设置。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+                <Button Click="SettingsNavigate_Click" Style="{StaticResource SettingsCardButton}" Tag="settings-account"                                AutomationProperties.Name="登录与账号" Margin="0,0,0,4">
+                  <Grid Padding="16,14" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border x:Name="AccountStateAvatarBorder" Width="44" Height="44" CornerRadius="22" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                      <FontIcon x:Name="AccountStateAvatarIcon" Glyph="&#xE77B;" FontSize="20" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                      <TextBlock x:Name="AccountStateTitle" Text="未登录" Style="{StaticResource RowTitle}" FontSize="15" />
+                      <TextBlock x:Name="AccountStateDetail" Text="登录后同步喜欢的音乐并恢复会话" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="登录与账号" Style="{StaticResource RowValue}" Margin="0,0,8,0" />
+                    <FontIcon Grid.Column="3" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
+                  </Grid>
+                </Button>
+
+                <Button Click="SettingsNavigate_Click" Style="{StaticResource SettingsCardButton}" Tag="settings-general" AutomationProperties.Name="常规设置">
+                  <Grid Padding="16,14" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border Width="36" Height="36" CornerRadius="18" Background="{ThemeResource ControlFillColorDefaultBrush}"><FontIcon Glyph="&#xE713;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}" /></Border>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="常规设置" Style="{StaticResource RowTitle}" />
+                      <TextBlock Text="开机自启、启动播放与关闭行为" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
+                  </Grid>
+                </Button>
+
+                <Button Click="SettingsNavigate_Click" Style="{StaticResource SettingsCardButton}" Tag="settings-playback"                                AutomationProperties.Name="播放与音质">
+                  <Grid Padding="16,14" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border Width="36" Height="36" CornerRadius="18" Background="{ThemeResource ControlFillColorDefaultBrush}"><FontIcon Glyph="&#xE768;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}" /></Border>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="播放与音质" Style="{StaticResource RowTitle}" />
+                      <TextBlock Text="播放音质、播放行为与系统媒体键" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
+                  </Grid>
+                </Button>
+
+                <Button Click="SettingsNavigate_Click" Style="{StaticResource SettingsCardButton}" Tag="settings-lyrics" AutomationProperties.Name="歌词">
+                  <Grid Padding="16,14" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border Width="36" Height="36" CornerRadius="18" Background="{ThemeResource ControlFillColorDefaultBrush}"><FontIcon Glyph="&#xE8A2;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}" /></Border>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="歌词" Style="{StaticResource RowTitle}" />
+                      <TextBlock Text="主界面歌词与任务栏歌词" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
+                  </Grid>
+                </Button>
+
+                <Button Click="SettingsNavigate_Click" Style="{StaticResource SettingsCardButton}" Tag="settings-appearance" AutomationProperties.Name="外观">
+                  <Grid Padding="16,14" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border Width="36" Height="36" CornerRadius="18" Background="{ThemeResource ControlFillColorDefaultBrush}"><FontIcon Glyph="&#xE790;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}" /></Border>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="外观" Style="{StaticResource RowTitle}" />
+                      <TextBlock Text="应用主题与深色模式" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
+                  </Grid>
+                </Button>
+
+                <Button Click="SettingsNavigate_Click" Style="{StaticResource SettingsCardButton}" Tag="settings-storage"                                AutomationProperties.Name="存储、缓存与日志">
+                  <Grid Padding="16,14" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border Width="36" Height="36" CornerRadius="18" Background="{ThemeResource ControlFillColorDefaultBrush}"><FontIcon Glyph="&#xE7B8;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}" /></Border>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="存储、缓存与日志" Style="{StaticResource RowTitle}" />
+                      <TextBlock Text="数据位置、会话文件与脱敏日志" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
+                  </Grid>
+                </Button>
+
+                <Button Click="SettingsNavigate_Click" Style="{StaticResource SettingsCardButton}" Tag="settings-about" AutomationProperties.Name="关于">
+                  <Grid Padding="16,14" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Image Width="32" Height="32" Source="ms-appx:///Assets/logo.png" Stretch="UniformToFill" />
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="关于点波音乐" Style="{StaticResource RowTitle}" />
+                      <TextBlock Text="项目地址、使用说明与版本信息" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="1.0.1" Style="{StaticResource RowValue}" Margin="0,0,8,0" />
+                    <FontIcon Grid.Column="3" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
+                  </Grid>
+                </Button>
+              </StackPanel>
+
+              <StackPanel x:Name="SettingsAccount" Visibility="Collapsed" Spacing="10" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="AccountTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl Template="{StaticResource SettingsSubHeader}" Tag="登录与账号" />
+                <TextBlock Text="二维码登录、会话恢复与本地退出。" Style="{StaticResource BodyText}" />
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel>
+                    <Grid Padding="16,13">
+                      <StackPanel Spacing="3">
+                        <TextBlock Text="登录状态" Style="{StaticResource RowTitle}" />
+                        <TextBlock x:Name="AccountStatusText" Text="尚未登录。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                    </Grid>
+                    <Border Style="{StaticResource Separator}" />
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="登录点波音乐" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="使用手机端扫码确认，二维码只在当前窗口显示，可刷新或取消。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <Button Click="Login_Click" x:Name="SignInButton" Grid.Column="1" Content="登录"                     VerticalAlignment="Center" MinWidth="100" />
+                    </Grid>
+                    <Border Style="{StaticResource Separator}" />
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="退出登录" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="清除本机保存的会话并停止播放；不会注销其他设备。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <Button Click="SignOut_Click" x:Name="SignOutButton" Grid.Column="1" Content="退出登录"                       IsEnabled="False" MinWidth="100" />
+                    </Grid>
+                  </StackPanel>
+                </Border>
+                <TextBlock x:Name="SessionLocationText" Text="会话使用当前用户加密保存；日志不记录票据或账号原值。" Style="{StaticResource CaptionText}" />
+              </StackPanel>
+
+              <StackPanel x:Name="SettingsGeneral" Visibility="Collapsed" Spacing="10" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="GeneralTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl Template="{StaticResource SettingsSubHeader}" Tag="常规设置" />
+
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel>
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="开机自启动" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="开机登录 Windows 后自动运行点波音乐" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ToggleSwitch x:Name="AutoStartToggle" Grid.Column="1" Style="{StaticResource SettingsToggle}" Toggled="AutoStartToggle_Toggled" AutomationProperties.Name="开机自启动" />
+                    </Grid>
+                    <Border Style="{StaticResource Separator}" />
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="开机自启时静默" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="开机自启动时不显示主界面，仅常驻于系统托盘" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ToggleSwitch x:Name="SilentAutoStartToggle" Grid.Column="1" Style="{StaticResource SettingsToggle}" Toggled="SilentAutoStartToggle_Toggled" AutomationProperties.Name="开机自启时静默" />
+                    </Grid>
+                    <Border Style="{StaticResource Separator}" />
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="启动时自动播放" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="应用启动完成后自动恢复上次播放进度并开始播放" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ToggleSwitch x:Name="AutoPlayOnLaunchToggle" Grid.Column="1" Style="{StaticResource SettingsToggle}" Toggled="AutoPlayOnLaunchToggle_Toggled" AutomationProperties.Name="启动时自动播放" />
+                    </Grid>
+                    <Border Style="{StaticResource Separator}" />
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="关闭程序后" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="点击主窗口右上角关闭按钮时的操作" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ComboBox x:Name="CloseBehaviorCombo" Grid.Column="1" Width="180" VerticalAlignment="Center" SelectionChanged="CloseBehaviorCombo_SelectionChanged" AutomationProperties.Name="关闭程序后">
+                        <ComboBoxItem Content="最小化到系统托盘" Tag="MinimizeToTray" />
+                        <ComboBoxItem Content="完全退出程序" Tag="Exit" />
+                      </ComboBox>
+                    </Grid>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+
+              <StackPanel x:Name="SettingsPlayback" Visibility="Collapsed" Spacing="10" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="PlaybackTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl Template="{StaticResource SettingsSubHeader}" Tag="播放与音质" />
+
+                <!-- 播放音质 -->
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel>
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="播放音质" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="优先请求指定音质。若曲目不支持或无权限，将自动平滑降级播放。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ComboBox SelectionChanged="AudioQualityCombo_SelectionChanged" x:Name="AudioQualityCombo" Grid.Column="1" Style="{StaticResource SettingsComboBox}" SelectedIndex="0"                                                       AutomationProperties.Name="播放音质">
+                        <ComboBoxItem Tag="2000kflac" Content="无损品质 (FLAC)" />
+                        <ComboBoxItem Tag="320kmp3" Content="极高品质 (MP3)" />
+                        <ComboBoxItem Tag="128kmp3" Content="标准品质 (MP3)" />
+                      </ComboBox>
+                    </Grid>
+                  </StackPanel>
+                </Border>
+
+                <!-- 播放行为 -->
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel>
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="选中播放歌曲时自动跳转到正在播放页" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="在曲目列表中点击播放歌曲时，自动进入正在播放界面。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ToggleSwitch Toggled="AutoNavigateToNowPlaying_Toggled" x:Name="AutoNavigateToNowPlayingToggle" Grid.Column="1" Style="{StaticResource SettingsToggle}" AutomationProperties.Name="选中播放歌曲时自动跳转到正在播放页" />
+                    </Grid>
+                    <Border Style="{StaticResource Separator}" />
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="权限不足时自动跳过" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="会员权益不足的歌曲不中断当前列表。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ToggleSwitch Toggled="SkipUnplayable_Toggled" x:Name="SkipUnplayableToggle" Grid.Column="1" Style="{StaticResource SettingsToggle}"                                  AutomationProperties.Name="权限不足时自动跳过" />
+                    </Grid>
+                    <Border Style="{StaticResource Separator}" />
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="播放失败时重试一次" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="仅重取播放地址，不无限重试；403 与权益错误直接提示。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ToggleSwitch Toggled="Retry_Toggled" x:Name="RetryToggle" Grid.Column="1" Style="{StaticResource SettingsToggle}"                         AutomationProperties.Name="播放失败时重试一次" />
+                    </Grid>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                  <Grid Padding="16,13" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="使用系统媒体键控制播放" Style="{StaticResource RowTitle}" />
+                      <TextBlock x:Name="SystemMediaKeysDescription" Text="使用键盘媒体键和 Windows 媒体控制面板播放、暂停及切歌。" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <ToggleSwitch Toggled="UseSystemMediaKeys_Toggled" x:Name="UseSystemMediaKeysToggle" Grid.Column="1" Style="{StaticResource SettingsToggle}" AutomationProperties.Name="使用系统媒体键控制播放" />
+                  </Grid>
+                </Border>
+              </StackPanel>
+
+              <StackPanel x:Name="SettingsLyrics" Visibility="Collapsed" Spacing="10" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="LyricsTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl Template="{StaticResource SettingsSubHeader}" Tag="歌词" />
+                <Button Click="SettingsNavigate_Click" Style="{StaticResource SettingsCardButton}" Tag="settings-main-lyrics" AutomationProperties.Name="主界面歌词">
+                  <Grid Padding="16,14" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border Width="36" Height="36" CornerRadius="18" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                      <FontIcon Glyph="&#xE8A2;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="主界面歌词" Style="{StaticResource RowTitle}" />
+                      <TextBlock Text="翻译、点击跳转与自动跟随" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <FontIcon Grid.Column="2" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
+                  </Grid>
+                </Button>
+                <Button Click="SettingsNavigate_Click" Style="{StaticResource SettingsCardButton}" Tag="settings-taskbar-lyrics" AutomationProperties.Name="任务栏歌词">
+                  <Grid Padding="16,14" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <Border Width="36" Height="36" CornerRadius="18" Background="{ThemeResource ControlFillColorDefaultBrush}">
+                      <FontIcon Glyph="&#xE7F4;" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="任务栏歌词" Style="{StaticResource RowTitle}" />
+                      <TextBlock Text="任务栏歌词功能暂未实现" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="未实现" Style="{StaticResource RowValue}" Margin="0,0,8,0" />
+                    <FontIcon Grid.Column="3" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
+                  </Grid>
+                </Button>
+              </StackPanel>
+
+              <!-- 主界面歌词 -->
+              <StackPanel x:Name="SettingsMainLyrics" Visibility="Collapsed" Spacing="10" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="MainLyricsTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl Template="{StaticResource LyricsSettingsSubHeader}" Tag="主界面歌词" />
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel>
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="显示翻译歌词" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="在原文下方显示可匹配的译文。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ToggleSwitch Toggled="ShowTranslation_Toggled" x:Name="ShowTranslationToggle" Grid.Column="1" Style="{StaticResource SettingsToggle}" AutomationProperties.Name="显示翻译歌词" />
+                    </Grid>
+                    <Border Style="{StaticResource Separator}" />
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="点击歌词跳转" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="点击有时间戳的歌词行，跳到对应播放位置。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ToggleSwitch Toggled="ClickLyricToSeek_Toggled" x:Name="ClickLyricToSeekToggle" Grid.Column="1" Style="{StaticResource SettingsToggle}" AutomationProperties.Name="点击歌词跳转" />
+                    </Grid>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel>
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="自动跟随当前歌词" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="播放时把当前行保持在歌词区域中央。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ToggleSwitch Toggled="AutoFollowLyrics_Toggled" x:Name="AutoFollowLyricsToggle" Grid.Column="1" Style="{StaticResource SettingsToggle}" AutomationProperties.Name="自动跟随当前歌词" />
+                    </Grid>
+                    <Border Style="{StaticResource Separator}" />
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="手动浏览后恢复跟随" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="停止手动滚动后，等待设定时间再回到当前行。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Slider ValueChanged="LyricFollowDelay_ValueChanged" x:Name="LyricFollowDelaySlider" Style="{StaticResource SettingsSlider}" Minimum="2" Maximum="10" StepFrequency="1" Width="180" AutomationProperties.Name="手动浏览后恢复跟随秒数" />
+                        <TextBlock x:Name="LyricFollowDelayText" Text="4 秒" Style="{StaticResource RowValue}" Width="52" />
+                      </StackPanel>
+                    </Grid>
+                  </StackPanel>
+                </Border>
+
+              </StackPanel>
+
+              <!-- 任务栏歌词 -->
+              <StackPanel x:Name="SettingsTaskbarLyrics" Visibility="Collapsed" Spacing="10" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="TaskbarLyricsTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl Template="{StaticResource LyricsSettingsSubHeader}" Tag="任务栏歌词" />
+                <Border Style="{StaticResource SettingsCard}">
+                  <Grid Padding="16,18" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel Spacing="5">
+                      <TextBlock Text="任务栏歌词暂未实现" Style="{StaticResource RowTitle}" />
+                      <TextBlock Text="当前仅支持在主界面的正在播放页查看同步歌词。" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="待开发" Style="{StaticResource RowValue}" VerticalAlignment="Center" />
+                  </Grid>
+                </Border>
+              </StackPanel>
+              <StackPanel x:Name="SettingsAppearance" Visibility="Collapsed" Spacing="10" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="AppearanceTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl Template="{StaticResource SettingsSubHeader}" Tag="外观" />
+                <Border Style="{StaticResource SettingsCard}">
+
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="应用主题" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="选择浅色、深色或跟随 Windows 系统设置。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <ComboBox SelectionChanged="ThemeCombo_SelectionChanged" x:Name="ThemeCombo" Grid.Column="1" Style="{StaticResource SettingsComboBox}" Width="180" AutomationProperties.Name="应用主题">
+                        <ComboBoxItem Content="浅色" Tag="Light" />
+                        <ComboBoxItem Content="深色" Tag="Dark" />
+                        <ComboBoxItem Content="跟随系统" Tag="Default" />
+                      </ComboBox>
+                    </Grid>
+
+
+                </Border>
+                <TextBlock Text="窗口尺寸与最小尺寸按当前 DPI 计算。" Style="{StaticResource CaptionText}" />
+              </StackPanel>
+
+              <StackPanel x:Name="SettingsStorage" Visibility="Collapsed" Spacing="10" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="StorageTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl Template="{StaticResource SettingsSubHeader}" Tag="存储、缓存与日志" />
+                <Border Style="{StaticResource SettingsCard}">
+                  <Grid Padding="16,13" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="数据文件夹" Style="{StaticResource RowTitle}" />
+                      <TextBlock x:Name="DataFolderText" Text="文档\DianboClient" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                      <Button Click="ResetDataFolder_Click" x:Name="ResetDataFolderButton" Content="恢复默认"                               Width="88" Visibility="Collapsed" />
+                      <Button Click="ChangeDataFolder_Click" Content="更改"                                Width="72" />
+                      <Button Click="OpenDataFolder_Click" Content="打开文件夹"                              Width="100" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+                <!-- 歌曲音频本地缓存 -->
+                <Border Style="{StaticResource SettingsCard}">
+                  <Grid Padding="16,13" ColumnSpacing="16">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                    <StackPanel Spacing="3" VerticalAlignment="Center">
+                      <TextBlock Text="歌曲音频本地缓存" Style="{StaticResource RowTitle}" />
+                      <TextBlock x:Name="AudioCacheSizeDescription" Text="正在计算缓存大小…" Style="{StaticResource RowDescription}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                      <ComboBox SelectionChanged="AudioCacheQuotaCombo_SelectionChanged" x:Name="AudioCacheQuotaCombo" Width="130"                                                          />
+                      <Button Click="OpenAudioCacheFolder_Click" Content="打开缓存目录"                                    Width="110" />
+                      <Button Click="ClearAudioCache_Click" x:Name="ClearAudioCacheButton" Content="清空缓存"                               Width="88" />
+                    </StackPanel>
+                  </Grid>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel>
+                    <Grid Padding="16,13" ColumnSpacing="16">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <StackPanel Spacing="3" VerticalAlignment="Center">
+                        <TextBlock Text="运行日志" Style="{StaticResource RowTitle}" />
+                        <TextBlock Text="滚动脱敏：只记录路径、状态、耗时与响应码，不记录票据、账号原值、二维码和媒体地址。" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                      <Button Click="OpenLog_Click" Grid.Column="1" Content="打开日志"                       Width="120" />
+                    </Grid>
+                  </StackPanel>
+                </Border>
+                <TextBlock Text="设置页不会写入任何敏感内容；切换账号时清空账号相关内存缓存。" Style="{StaticResource CaptionText}" />
+              </StackPanel>
+              <StackPanel x:Name="SettingsAbout" Visibility="Collapsed" Spacing="10" VerticalAlignment="Top">
+                <StackPanel.RenderTransform>
+                  <TranslateTransform x:Name="AboutTransform" />
+                </StackPanel.RenderTransform>
+                <ContentControl Template="{StaticResource SettingsSubHeader}" Tag="关于" />
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel Padding="16" Spacing="8">
+                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                      <Image Width="48" Height="48" Source="ms-appx:///Assets/logo.png" Stretch="UniformToFill" />
+                      <StackPanel VerticalAlignment="Center" Spacing="3">
+                        <TextBlock Text="点波音乐" Style="{StaticResource RowTitle}" FontSize="18" />
+                        <TextBlock Text="版本 1.0.1" Style="{StaticResource RowDescription}" />
+                      </StackPanel>
+                    </StackPanel>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel Padding="16" Spacing="4">
+                    <TextBlock Text="项目地址" Style="{StaticResource RowTitle}" />
+                    <HyperlinkButton Content="GitHub · DianboClient" NavigateUri="https://github.com/weiwei221206/DianboClient" Padding="0" HorizontalAlignment="Left" AutomationProperties.Name="在浏览器中打开 GitHub 项目地址" />
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel Padding="16" Spacing="8">
+                    <TextBlock Text="使用说明" Style="{StaticResource RowTitle}" />
+                    <TextBlock Text="本项目使用第官方服务接口，接口行为可能变化。请遵守相关服务条款，并仅播放自己有权访问的内容。仅供学习交流，严禁用于商业用途。" Style="{StaticResource RowDescription}" TextWrapping="Wrap" />
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+            </Grid>
+          </Grid>
+        </ScrollViewer>
+
+            <Grid PointerWheelChanged="PlayingPage_PointerWheelChanged" x:Name="PlayingPage" SizeChanged="PlayingPage_SizeChanged"
+                  Background="Transparent"
+                  Visibility="Collapsed"
+                  HorizontalAlignment="Stretch"
+                  VerticalAlignment="Stretch"
+                  Margin="16,12,16,12">
+              <Grid.RenderTransform>
+                <TranslateTransform x:Name="PlayingTransform" />
+              </Grid.RenderTransform>
+
+              <Grid x:Name="PlayingHost" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+
+                <Grid x:Name="PlayingCoverPage" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                  <Grid.RenderTransform>
+                    <TranslateTransform x:Name="CoverPageTransform" />
+                  </Grid.RenderTransform>
+
+                  <Grid x:Name="CoverPageLayoutGrid" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition x:Name="CoverLayoutCol0" Width="*" />
+                      <ColumnDefinition x:Name="CoverLayoutCol1" Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                      <RowDefinition x:Name="CoverLayoutRow0" Height="*" />
+                      <RowDefinition x:Name="CoverLayoutRow1" Height="0" />
+                    </Grid.RowDefinitions>
+
+                    <Grid x:Name="CoverSectionGrid"
+                          Background="Transparent"
+                          Grid.Column="0"
+                          Grid.Row="0"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Padding="16">
+                      <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid x:Name="PlayingCoverContainer"
+                              Width="440"
+                              Height="440"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center">
+
+                          <Border CornerRadius="20" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                            <FontIcon x:Name="CoverPlaceholderIcon" Glyph="&#xEC4F;" FontSize="64" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                          </Border>
+                          <Border CornerRadius="20" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                            <Image x:Name="NowPlayingCover" Stretch="UniformToFill" />
+                          </Border>
+                          <Border x:Name="NowPlayingBufferingOverlay" CornerRadius="20" Background="#55000000" Visibility="Collapsed">
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                              <ProgressRing IsActive="True" Width="36" Height="36" Foreground="White" />
+                              <TextBlock Text="正在缓冲…" FontSize="13" Foreground="White" HorizontalAlignment="Center" />
+                            </StackPanel>
+                          </Border>
+                        </Grid>
+                      </Viewbox>
+                    </Grid>
+                    <Grid x:Name="InfoAndControlsGrid"
+                          Background="Transparent"
+                          Grid.Column="1"
+                          Grid.Row="0"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Padding="16,8">
+                      <Viewbox Stretch="Uniform" StretchDirection="DownOnly" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <StackPanel x:Name="ControlsContentPanel"
+                                    Background="Transparent"
+                                    Width="420"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Spacing="8"
+                                    Padding="4,2">
+
+                          <!-- 歌曲元数据信息 -->
+                          <StackPanel x:Name="TrackMetaPanel" Spacing="4" HorizontalAlignment="Center">
+                            <TextBlock x:Name="NowPlayingTitle" Text="点波音乐" FontSize="22" FontWeight="Bold" TextAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="NowPlayingArtist" Text="发现好音乐，享受当下" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" MaxLines="1" TextTrimming="CharacterEllipsis" />
+                            <TextBlock x:Name="NowPlayingAlbum" Text="" FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" MaxLines="1" TextTrimming="CharacterEllipsis" Visibility="Collapsed" />
+                            <!-- 音质胶囊标签 -->
+                            <Button Click="NowPlayingQualityBadge_Click" x:Name="NowPlayingQualityBadge"
+                                                                        
+                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Padding="8,2"
+                                    MinWidth="0"
+                                    MinHeight="22"
+                                    HorizontalAlignment="Center"
+                                    Margin="0,2,0,0"
+                                    Visibility="Collapsed"
+                                    ToolTipService.ToolTip="点击切换播放音质或前往设置">
+                              <StackPanel Orientation="Horizontal" Spacing="4" VerticalAlignment="Center">
+                                <TextBlock x:Name="NowPlayingQualityText" Text="标准品质 · MP3" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                <FontIcon Glyph="&#xE70D;" FontSize="8" Foreground="{ThemeResource TextFillColorTertiaryBrush}" VerticalAlignment="Center" />
+                              </StackPanel>
+                            </Button>
+                          </StackPanel>
+
+                          <!-- 播放时间轴 -->
+                          <StackPanel x:Name="SeekPanel" Spacing="2" Margin="0,2,0,0">
+                            <Slider x:Name="SeekSlider" Minimum="0" Maximum="100" StepFrequency="1" IsEnabled="False" AutomationProperties.Name="播放进度" HorizontalAlignment="Stretch" />
+                            <Grid Margin="2,-4,2,0">
+                              <TextBlock x:Name="PositionText" Text="0:00" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Left" />
+                              <TextBlock x:Name="DurationText" Text="0:00" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Right" />
+                            </Grid>
+                          </StackPanel>
+
+                          <!-- 主控制按钮栏 -->
+                          <StackPanel x:Name="MainControlsBar" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6">
+                            <!-- 收藏 / 取消收藏按钮 -->
+                            <Button Click="PlayingFavorite_Click" x:Name="PlayingFavoriteButton"
+                                                                 
+                                    IsEnabled="False"
+                                    Width="34" Height="34" Padding="0"
+                                    CornerRadius="17"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    ToolTipService.ToolTip="添加收藏"
+                                    AutomationProperties.Name="收藏当前歌曲">
+                              <FontIcon x:Name="PlayingFavoriteIcon" Glyph="&#xEB51;" FontSize="15" Foreground="{ThemeResource FavoriteUncheckedBrush}" />
+                            </Button>
+                            <!-- 播放模式切换按钮 -->
+                            <Button Click="PlayModeButton_Click" x:Name="PlayModeButton"                              Width="34" Height="34" Padding="0" CornerRadius="17" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="列表循环" AutomationProperties.Name="播放模式">
+                              <FontIcon x:Name="PlayModeIcon" Glyph="&#xE8EE;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                            <!-- 上一首 -->
+                            <Button Click="Previous_Click" x:Name="PreviousButton"                        IsEnabled="False" Width="38" Height="38" Padding="0" CornerRadius="19" ToolTipService.ToolTip="上一首" AutomationProperties.Name="上一首">
+                              <FontIcon Glyph="&#xE892;" FontSize="15" />
+                            </Button>
+                            <!-- 播放/暂停（大号 Accent 按钮） -->
+                            <Button Click="PlayPause_Click" x:Name="PlayPauseButton"                         IsEnabled="False" Width="50" Height="50" CornerRadius="25" Style="{ThemeResource AccentButtonStyle}" ToolTipService.ToolTip="播放" AutomationProperties.Name="播放或暂停">
+                              <FontIcon x:Name="PlayPauseIcon" Glyph="&#xE768;" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Button>
+                            <!-- 下一首 -->
+                            <Button Click="Next_Click" x:Name="NextButton"                    IsEnabled="False" Width="38" Height="38" Padding="0" CornerRadius="19" ToolTipService.ToolTip="下一首" AutomationProperties.Name="下一首">
+                              <FontIcon Glyph="&#xE893;" FontSize="15" />
+                            </Button>
+
+
+
+
+                            <!-- 查看播放队列 -->
+                            <Button Click="PlayingQueue_Click" x:Name="PlayingQueueButton"                            Width="34" Height="34" Padding="0" CornerRadius="17" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="查看播放队列" AutomationProperties.Name="查看播放队列">
+                              <FontIcon Glyph="&#xE8FD;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                            <!-- 更多操作 -->
+                            <Button Click="PlayingMore_Click" x:Name="PlayingMoreButton"                           IsEnabled="False" Width="34" Height="34" Padding="0" CornerRadius="17" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="更多操作" AutomationProperties.Name="更多操作">
+                              <FontIcon Glyph="&#xE712;" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                          </StackPanel>
+
+                          <!-- 音量控制栏 -->
+                          <Grid x:Name="VolumeGrid" HorizontalAlignment="Center" ColumnSpacing="6">
+                            <Grid.ColumnDefinitions>
+                              <ColumnDefinition Width="Auto" />
+                              <ColumnDefinition Width="Auto" />
+                              <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Button Click="MuteButton_Click" x:Name="MuteButton"                          Width="32" Height="32" Padding="0" Background="Transparent" BorderThickness="0" CornerRadius="16" ToolTipService.ToolTip="静音 / 恢复" AutomationProperties.Name="静音切换">
+                              <FontIcon x:Name="VolumeIcon" Glyph="&#xE767;" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </Button>
+                            <Slider ValueChanged="VolumeSlider_ValueChanged" x:Name="VolumeSlider" Grid.Column="1" Width="120" Minimum="0" Maximum="100" StepFrequency="1"                                          AutomationProperties.Name="音量" VerticalAlignment="Center" />
+                            <TextBlock x:Name="VolumePercentText" Grid.Column="2" Text="" FontSize="11" Width="34" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                          </Grid>
+
+                          <Button Click="CoverToLyricsButton_Click" x:Name="CoverToLyricsButton"
+                                                                   
+                                  HorizontalAlignment="Center"
+                                  Margin="0,2,0,0"
+                                  Padding="14,6"
+                                  CornerRadius="15"
+                                  Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                  BorderThickness="1"
+                                  BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                  ToolTipService.ToolTip="滚动鼠标滚轮或点击切换至歌词页">
+                            <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                              <FontIcon x:Name="CoverToLyricsIcon" Glyph="&#xE70D;" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                              <TextBlock x:Name="CoverToLyricsText" Text="向下滚动查看歌词" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                          </Button>
+
+                          <InfoBar x:Name="NowPlayingInfoBar" Severity="Error" IsOpen="False" IsClosable="True" Margin="0,2,0,0" />
+
+                        </StackPanel>
+                      </Viewbox>
+                    </Grid>
+                  </Grid>
+                </Grid>
+
+                <Grid x:Name="PlayingLyricsPage" Background="Transparent" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="Collapsed">
+                  <Grid.RenderTransform>
+                    <TranslateTransform x:Name="LyricsPageTransform" />
+                  </Grid.RenderTransform>
+
+                  <Border x:Name="LyricsCardBorder"
+                          CornerRadius="16"
+                          Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                          BorderThickness="1"
+                          HorizontalAlignment="Stretch"
+                          VerticalAlignment="Stretch"
+                          Margin="12,6,12,10">
+
+                    <Grid>
+                      <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                      </Grid.RowDefinitions>
+
+                      <Grid Grid.Row="0" Padding="14,10" ColumnSpacing="10">
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- 返回封面按钮 -->
+                        <Button Click="LyricsBackToCoverButton_Click" x:Name="LyricsBackToCoverButton"
+                                                                     
+                                Padding="10,5"
+                                CornerRadius="14"
+                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                BorderThickness="1"
+                                BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}"
+                                ToolTipService.ToolTip="返回封面页（或使用鼠标滚轮切换）">
+                          <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                            <FontIcon x:Name="LyricsBackToCoverIcon" Glyph="&#xE70E;" FontSize="11" />
+                            <TextBlock x:Name="LyricsBackToCoverText" Text="返回封面" FontSize="12" />
+                          </StackPanel>
+                        </Button>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" HorizontalAlignment="Center">
+                          <TextBlock x:Name="LyricsHeader" FontSize="13" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" MaxWidth="320" />
+                        </StackPanel>
+
+                        <!-- 翻译开关按钮 -->
+                        <ToggleButton Click="TranslationToggle_Click" x:Name="TranslationToggle" Grid.Column="2" Content="译"                                 Width="32" Height="28" Padding="0" CornerRadius="6" FontSize="11" ToolTipService.ToolTip="显示/隐藏翻译歌词" AutomationProperties.Name="显示翻译歌词" />
+
+                        <Button Click="LyricsToggle_Click" x:Name="LyricsFollowButton" Grid.Column="3"                            ToolTipService.ToolTip="定位当前演唱行并恢复自动跟随" AutomationProperties.Name="定位当前歌词" Padding="8,4" CornerRadius="6" FontSize="11">
+                          <StackPanel Orientation="Horizontal" Spacing="5">
+                            <FontIcon Glyph="&#xE8D6;" FontSize="11" />
+                            <TextBlock x:Name="LyricsFollowStatusText" Text="跟随中" FontSize="11" VerticalAlignment="Center" />
+                          </StackPanel>
+                        </Button>
+                      </Grid>
+
+                      <!-- 歌词内翻页核心视口 -->
+                      <Grid SizeChanged="LyricsScrollArea_SizeChanged" Grid.Row="1" x:Name="LyricsScrollArea" Background="Transparent"                                           >
+                        <ListView ItemClick="LyricsList_ItemClick" Loaded="LyricsList_Loaded" x:Name="LyricsList"
+                                  SelectionMode="None"
+                                  IsItemClickEnabled="True"
+                                                                  
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Stretch"
+                                  BorderThickness="0"
+                                  Padding="0"
+                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                  ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                                                            
+                                                                                      >
+                          <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                              <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                              <Setter Property="Padding" Value="0" />
+                              <Setter Property="Margin" Value="0" />
+                              <Setter Property="MinHeight" Value="0" />
+                            </Style>
+                          </ListView.ItemContainerStyle>
+                          <ListView.ItemTemplate>
+                            <DataTemplate>
+                              <Grid Background="Transparent" PointerEntered="LyricRow_PointerEntered" PointerExited="LyricRow_PointerExited">
+                                <StackPanel Spacing="4" Padding="88,10" HorizontalAlignment="Stretch" Opacity="{Binding Opacity}">
+                                  <TextBlock Text="{Binding Original}"
+                                             TextWrapping="Wrap"
+                                             TextAlignment="Center"
+                                             HorizontalAlignment="Center"
+                                             FontSize="{Binding FontSize}"
+                                             Foreground="{Binding Foreground}"
+                                             FontWeight="{Binding FontWeight}" />
+                                  <TextBlock Text="{Binding Translation}"
+                                             TextWrapping="Wrap"
+                                             TextAlignment="Center"
+                                             HorizontalAlignment="Center"
+                                             FontSize="13"
+                                             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                             Visibility="{Binding TranslationVisibility}" />
+                                </StackPanel>
+                                <TextBlock Text="{Binding Timestamp}"
+                                           Visibility="{Binding TimestampVisibility}"
+                                           IsHitTestVisible="False"
+                                           HorizontalAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Margin="0,0,20,0"
+                                           FontSize="12"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                              </Grid>
+                            </DataTemplate>
+                          </ListView.ItemTemplate>
+                        </ListView>
+
+                        <!-- 歌词空状态占位展示 -->
+                        <StackPanel x:Name="LyricsEmptyPanel" VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="14" Visibility="Collapsed" Padding="24">
+                          <Border Width="64" Height="64" CornerRadius="32" Background="{ThemeResource SubtleFillColorSecondaryBrush}" HorizontalAlignment="Center">
+                            <FontIcon x:Name="LyricsEmptyIcon" Glyph="&#xEC4F;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                          </Border>
+                          <StackPanel Spacing="4" HorizontalAlignment="Center">
+                            <TextBlock x:Name="LyricsEmptyTitle" Text="暂无播放中的音乐" FontSize="15" FontWeight="SemiBold" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Name="LyricsEmptySubtitle" Text="从发现音乐或搜索中挑选一首歌开始聆听" FontSize="12" HorizontalAlignment="Center" Foreground="{ThemeResource TextFillColorTertiaryBrush}" TextWrapping="Wrap" TextAlignment="Center" MaxWidth="260" />
+                          </StackPanel>
+                        </StackPanel>
+                      </Grid>
+
+                    </Grid>
+                  </Border>
+                </Grid>
+
+              </Grid>
+            </Grid>
+
+      </Grid>
+    </NavigationView>
+  </Grid>
+</Window>
+

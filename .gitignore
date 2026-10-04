@@ -1,0 +1,120 @@
+# 点波音乐 / WinUI 3 客户端
+# GitHub 仓库保留源码、测试、资源和构建入口；排除文档、本机数据与历史验证产物。
+
+# ---------------------------------------------------------------- 生成物 / 构建输出
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+ARM/
+ARM64/
+bld/
+[Gg]enerated [Ff]iles/
+GeneratedFiles/
+*.xbf
+*.xaml.g.cs
+*.g.cs
+*.g.i.cs
+*.AssemblyInfo.cs
+*.AssemblyAttributes.cs
+*.pdb
+*.cache
+*.tlog
+*.binlog
+*.deps.json
+*.runtimeconfig.json
+*.Up2Date
+*.resfiles
+*.resfiles.intermediate
+
+# ---------------------------------------------------------------- 本地工具链 / 大体积二进制
+# 本机自带 SDK 与下载的工具包，不随仓库分发
+dotnet-sdk/
+/.tools/
+/validation/
+/docs/
+/启动点波音乐.cmd
+*.zip
+
+# ---------------------------------------------------------------- Python 验证环境
+__pycache__/
+*.py[cod]
+.venv/
+env/
+venv/
+
+# ---------------------------------------------------------------- NuGet / 包还原
+packages/
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ---------------------------------------------------------------- 发布 / 安装包
+publish/
+publish-*/
+AppPackages/
+BundleArtifacts/
+*.appx
+*.appxbundle
+*.msix
+*.msixbundle
+*.msixupload
+*.appxupload
+*.cer
+
+# ---------------------------------------------------------------- IDE / 编辑器
+.vs/
+.vscode/
+.idea/
+_ReSharper*/
+*.user
+*.suo
+*.userosscache
+*.userprefs
+*.sln.docstates
+*.DotSettings.user
+*.swp
+*~
+
+# ---------------------------------------------------------------- 系统 / 临时文件
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+*.tmp
+*.temp
+*.bak
+*.*~
+*.log
+TestResults/
+*.coverage
+*.coveragexml
+test_out.txt
+*.out
+*.out.txt
+
+# ---------------------------------------------------------------- 本地临时/诊断产物
+/.scratch/
+/.dsh-acl-recovery/
+/.review-temp/
+
+# ---------------------------------------------------------------- 本机应用数据（若数据目录设在仓库内）
+/DianboClient/
+/accounts/
+/cache/
+/logs/
+/mpv/
+/session.dpapi
+/settings.json
+/devid.txt
+/history.json
+/favorites.json
+/playlists.json
+/queue.json
+/pending-data-root.json
+/custom_data_dir.txt

@@ -12,11 +12,17 @@
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <SelfContained>true</SelfContained>
+    <!--
+      必须开启：dotnet publish 默认不会把 WinUI 的资源索引 Dianbo.pri 和编译后的 XAML 带进发布目录，
+      结果是发布版一启动就在 Microsoft.UI.Xaml.dll 里崩溃（0xc000027b），而 dotnet build 的输出却正常。
+      开启后 dotnet publish 会走 MSIX tooling 的 PRI 生成流程，发布产物才和构建产物一样可用。
+    -->
+    <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>Dianbo</AssemblyName>
     <Product>点波音乐</Product>
-    <Version>1.0.1</Version>
+    <!-- 版本号统一在根目录 Directory.Build.props 里维护。 -->
     <!-- 二维码像素写入 WriteableBitmap 需要 IBufferByteAccess 指针访问。 -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationIcon>..\..\assets\app.ico</ApplicationIcon>

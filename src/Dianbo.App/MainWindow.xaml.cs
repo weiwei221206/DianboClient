@@ -28,6 +28,7 @@ public sealed partial class MainWindow : Window
     private bool _isExplicitExit;
     private SystemTrayService? _trayService;
     private bool _restored;
+    private bool _sessionRestoreFinished;
     private int _networkDebounce;
 
     public MainWindow(AppServices services)
@@ -296,7 +297,6 @@ public sealed partial class MainWindow : Window
         // 会话恢复放在窗口显示之后
         if (_restored) return;
         _restored = true;
-        _ = LoadDiscoverContentAsync();
         try
         {
             var restored = await _services.Auth.RestoreAsync(_lifetime.Token);
@@ -316,6 +316,11 @@ public sealed partial class MainWindow : Window
         catch (Exception exception)
         {
             _services.Log.Write($"session restore failed: {exception.GetType().Name}");
+        }
+        finally
+        {
+            _sessionRestoreFinished = true;
+            _ = LoadDiscoverContentAsync();
         }
     }
 

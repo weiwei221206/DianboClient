@@ -55,6 +55,7 @@ public sealed partial class MainWindow : Window
             if (_services.Auth.IsSignedIn)
             {
                 _ = PopulateSidebarPlaylistsAsync();
+                _ = LoadDiscoverContentAsync(forceRefresh: true);
             }
         }
     }
@@ -79,12 +80,15 @@ public sealed partial class MainWindow : Window
         _userPlaylists.Clear();
         _fondSongs.Clear();
         _detailPlaylistSongs.Clear();
+        _discoverSongs.Clear();
+        _discoverLoaded = false;
         _selectedPlaylist = null;
         _currentFondPlaylist = null;
         ResetSidebarLibraryItems();
         UpdateAccountUi();
         UpdateLibRootUi();
         UpdateLibFondUi();
+        _ = LoadDiscoverContentAsync(forceRefresh: true);
         if (_currentPage == "library") Navigate("library");
     }
 

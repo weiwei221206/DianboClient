@@ -11,4 +11,21 @@
     <InvariantGlobalization>false</InvariantGlobalization>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
+
+  <!-- 版本号的唯一来源：主程序、启动器、发布包名都取这里，避免各处手动同步。
+       改版本时只改这一处，然后重新跑 scripts\pack-release.ps1。 -->
+  <PropertyGroup>
+    <Version>1.0.1</Version>
+  </PropertyGroup>
+
+  <!-- 文件属性里的发布者/产品信息。注意：这些字段只是元数据，
+       不会改变 SmartScreen 的“未知发布者”，那只取决于 Authenticode 代码签名证书。 -->
+  <PropertyGroup>
+    <Product>点波音乐</Product>
+    <AssemblyTitle>点波音乐</AssemblyTitle>
+    <FileDescription>点波音乐 - 第三方波点音乐桌面客户端</FileDescription>
+    <Company>点波音乐项目</Company>
+    <Authors>点波音乐项目</Authors>
+    <Copyright>Copyright (C) 2026 点波音乐项目</Copyright>
+  </PropertyGroup>
 </Project>

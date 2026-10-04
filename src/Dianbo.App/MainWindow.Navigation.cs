@@ -293,7 +293,7 @@ public sealed partial class MainWindow : Window
         {
             SearchBox.Focus(FocusState.Programmatic);
         }
-        else if (container == "discover" && !_discoverLoaded)
+        else if (container == "discover" && _sessionRestoreFinished && !_discoverLoaded)
         {
             _ = LoadDiscoverContentAsync();
         }

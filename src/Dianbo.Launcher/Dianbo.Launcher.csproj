@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    发布包根目录的启动器。真正的程序主体是 app\Dianbo.exe，本工程只负责把它拉起来，
+    这样发布包的根目录就只有一个可执行文件，用户一眼能认出该点哪个。
+    TFM / RuntimeIdentifier / 平台等公共属性来自根目录的 Directory.Build.props。
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>Dianbo.Launcher</RootNamespace>
+    <AssemblyName>启动点波音乐</AssemblyName>
+    <ApplicationIcon>..\..\assets\app.ico</ApplicationIcon>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- 发布形态固定为「自包含 + 裁剪 + 单文件」，所以发布包根目录只有一个 exe，且不要求用户安装 .NET。 -->
+  <PropertyGroup>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishTrimmed>true</PublishTrimmed>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <!-- 启动器不用文件版本之外的元数据，减少体积。 -->
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+</Project>

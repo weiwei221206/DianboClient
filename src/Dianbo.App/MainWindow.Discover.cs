@@ -78,10 +78,13 @@ public sealed partial class MainWindow : Window
             }
             else if (_discoverSongs.Count == 0)
             {
-                DiscoverOfflineInfoBar.IsOpen = true;
+                if (_services.Auth.IsSignedIn)
+                    ShowDiscoverUnavailable("暂无推荐歌曲", "当前没有可显示的推荐歌曲，请稍后重试。");
+                else
+                    ShowDiscoverUnavailable("登录后查看推荐", "登录账号后即可查看推荐歌曲。您仍可使用搜索和本地音乐。");
             }
         }
-        catch (OperationCanceledException)
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested)
         {
         }
         catch (Exception ex)
@@ -89,7 +92,12 @@ public sealed partial class MainWindow : Window
             _services.Log.Write($"load discover songs failed: {ex.Message}");
             if (_discoverSongs.Count == 0)
             {
-                DiscoverOfflineInfoBar.IsOpen = true;
+                if (ex is BodianApiException apiEx && apiEx.IsPermissionDenied && !_services.Auth.IsSignedIn)
+                    ShowDiscoverUnavailable("登录后查看推荐", "推荐歌曲需要登录账号。您仍可使用搜索和本地音乐。");
+                else if (ex is HttpRequestException or TimeoutException or TaskCanceledException)
+                    ShowDiscoverUnavailable("当前处于离线模式", "网络不可用，无法加载在线推荐内容。您可以前往“我的音乐”播放本地缓存的歌曲。");
+                else
+                    ShowDiscoverUnavailable("暂时无法加载推荐", "推荐服务暂时不可用，请稍后重试。");
             }
         }
         finally
@@ -98,6 +106,13 @@ public sealed partial class MainWindow : Window
             DiscoverSongsRing.Visibility = Visibility.Collapsed;
             _isLoadingDiscoverSongs = false;
         }
+    }
+
+    private void ShowDiscoverUnavailable(string title, string message)
+    {
+        DiscoverOfflineInfoBar.Title = title;
+        DiscoverOfflineInfoBar.Message = message;
+        DiscoverOfflineInfoBar.IsOpen = true;
     }
 
     private async Task LoadDiscoverPlaylistsAsync(bool shuffle = false)

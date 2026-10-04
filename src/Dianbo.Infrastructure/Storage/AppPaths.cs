@@ -317,8 +317,19 @@ public sealed class AppPaths
 
     private void MigrateLegacyIfPresent()
     {
+        var marker = Path.Combine(Root, ".legacy-migration-complete");
         try
         {
+            if (File.Exists(marker)) return;
+            // An existing data root has already been used by this version. In particular,
+            // a missing session here can mean the user explicitly signed out.
+            if (File.Exists(SettingsPath) || File.Exists(DeviceIdPath) || File.Exists(HistoryPath) ||
+                File.Exists(FavoritesPath) || File.Exists(PlaylistsPath) || File.Exists(QueuePath))
+            {
+                File.WriteAllText(marker, string.Empty);
+                return;
+            }
+
             var legacyDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "BodianClient");
@@ -330,6 +341,7 @@ public sealed class AppPaths
                 CopyIfMissing(Path.Combine(legacyDir, "history.json"), HistoryPath);
                 CopyIfMissing(Path.Combine(legacyDir, "favorites.json"), FavoritesPath);
             }
+            File.WriteAllText(marker, string.Empty);
         }
         catch
         {

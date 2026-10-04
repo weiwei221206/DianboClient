@@ -47,6 +47,8 @@ public static class Program
         UserPlaylistServiceTests();
         QueueAndPlayModeTests();
         RecommendationRadioTests();
+        RecommendationRadioBufferTests();
+        CurrentSongSafetyTests();
         AudioCacheTests();
 
         Console.WriteLine();
@@ -1181,6 +1183,43 @@ public static class Program
         Equal("回退后下一首再次请求接口", 7, api.RecommendationRequests);
         coordinator.PlayQueueAsync([new Song { Id = 999, Name = "普通队列", Artist = "测试歌手" }], 0, CancellationToken.None).GetAwaiter().GetResult();
         Check("播放普通队列退出随机单曲", !coordinator.IsRecommendationRadio);
+    }
+
+    private static void RecommendationRadioBufferTests()
+    {
+        var songsBatch = Enumerable.Range(1, 10).Select(i => new Song { Id = 300 + i, Name = $"推荐 {i}", Artist = "测试歌手" }).ToList();
+        var api = new DummyApiClient
+        {
+            Recommendations = () => songsBatch
+        };
+        var backend = new FakePlaybackBackend();
+        var coordinator = new Dianbo.Core.Playback.PlaybackCoordinator(api, backend);
+        coordinator.StartRecommendationRadioAsync(CancellationToken.None).GetAwaiter().GetResult();
+        Equal("首次启动拉取推荐批次", 1, api.RecommendationRequests);
+        Equal("播放队列只含当前首曲", 1, coordinator.Queue.Count);
+
+        for (var i = 0; i < 5; i++)
+        {
+            coordinator.NextAsync(CancellationToken.None).GetAwaiter().GetResult();
+        }
+        Equal("缓冲池内切歌不重复请求接口", 1, api.RecommendationRequests);
+        Equal("切歌历史正常递增", 6, coordinator.Queue.Count);
+    }
+
+    private static void CurrentSongSafetyTests()
+    {
+        var api = new DummyApiClient();
+        var backend = new FakePlaybackBackend();
+        var coordinator = new Dianbo.Core.Playback.PlaybackCoordinator(api, backend);
+
+        Check("空队列 CurrentSong 安全返回 null", coordinator.CurrentSong is null);
+
+        var song = new Song { Id = 501, Name = "Safety Song", Artist = "Artist" };
+        coordinator.PlayQueueAsync([song], 0, CancellationToken.None).GetAwaiter().GetResult();
+        Equal("播放时 CurrentSong 正常获取", 501L, coordinator.CurrentSong?.Id ?? 0);
+
+        coordinator.ClearQueueAsync(CancellationToken.None).GetAwaiter().GetResult();
+        Check("清空队列后 CurrentSong 安全返回 null", coordinator.CurrentSong is null);
     }
 
     private static void QueueAndPlayModeTests()

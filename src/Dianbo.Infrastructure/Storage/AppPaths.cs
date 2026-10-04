@@ -12,6 +12,7 @@ public sealed class AppSettings
     public bool AutoFollowLyrics { get; set; } = true;
     public int LyricFollowDelaySeconds { get; set; } = 4;
     public bool ClickLyricToSeek { get; set; } = true;
+    public TaskbarLyricSettings TaskbarLyrics { get; set; } = new();
     public string? MpvPath { get; set; }
     public bool AutoSkipUnplayable { get; set; }
     public bool RetryOnceOnFailure { get; set; } = true;
@@ -24,6 +25,54 @@ public sealed class AppSettings
     public bool AutoPlayOnLaunch { get; set; }
     public string CloseBehavior { get; set; } = "MinimizeToTray";
     public string Theme { get; set; } = "Default";
+}
+
+public sealed class TaskbarLyricSettings
+{
+    public bool Enabled { get; set; }
+    public string PositionMode { get; set; } = "left";
+    public int XOffset { get; set; } = 12;
+    public int YOffset { get; set; }
+    public int Width { get; set; } = 360;
+    public bool ShowCover { get; set; } = true;
+    public bool RotateCover { get; set; } = true;
+    public int CoverSize { get; set; } = 28;
+    public bool ShowTranslation { get; set; } = true;
+    public string FontFamily { get; set; } = "Microsoft YaHei UI";
+    public double MainFontSize { get; set; } = 15;
+    public double SubFontSize { get; set; } = 12;
+    public double CharacterSpacing { get; set; } = -0.5;
+    public string AnimationType { get; set; } = "HorizontalSweep";
+    public int AnimationDurationMs { get; set; } = 400;
+    public string ColorMode { get; set; } = "system";
+    public string CustomColor { get; set; } = "#1FD1E0";
+    public bool ShowBackgroundCard { get; set; }
+    public bool AutoHideWithTaskbar { get; set; } = true;
+    public bool HideWhenFullscreen { get; set; } = true;
+
+    public TaskbarLyricSettings Copy() => new()
+    {
+        Enabled = Enabled,
+        PositionMode = PositionMode,
+        XOffset = XOffset,
+        YOffset = YOffset,
+        Width = Width,
+        ShowCover = ShowCover,
+        RotateCover = RotateCover,
+        CoverSize = CoverSize,
+        ShowTranslation = ShowTranslation,
+        FontFamily = FontFamily,
+        MainFontSize = MainFontSize,
+        SubFontSize = SubFontSize,
+        CharacterSpacing = CharacterSpacing,
+        AnimationType = AnimationType,
+        AnimationDurationMs = AnimationDurationMs,
+        ColorMode = ColorMode,
+        CustomColor = CustomColor,
+        ShowBackgroundCard = ShowBackgroundCard,
+        AutoHideWithTaskbar = AutoHideWithTaskbar,
+        HideWhenFullscreen = HideWhenFullscreen
+    };
 }
 
 public sealed class SettingsStore

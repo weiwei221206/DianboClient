@@ -578,6 +578,7 @@ public sealed partial class MainWindow : Window
 
         UpdateLyricsVisibility(hasSong);
         UpdateCurrentLyric(snapshot.Position);
+        SyncTaskbarLyrics();
         UpdateSystemMediaControls(snapshot);
     }
 

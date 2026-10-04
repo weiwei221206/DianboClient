@@ -6,8 +6,19 @@ namespace Dianbo.App.Services;
 /// <summary>单实例保护</summary>
 public static class SingleInstance
 {
+    private static string SafeUserName
+    {
+        get
+        {
+            var user = Environment.UserName;
+            if (string.IsNullOrWhiteSpace(user)) return "DefaultUser";
+            var chars = user.Select(c => char.IsLetterOrDigit(c) ? c : '_').ToArray();
+            return new string(chars);
+        }
+    }
+
     internal static string MutexName =>
-        $"Local\\DianboClient.SingleInstance.{Environment.UserName}";
+        $"Local\\DianboClient.SingleInstance.{SafeUserName}";
 
     private static Mutex? _mutex;
 

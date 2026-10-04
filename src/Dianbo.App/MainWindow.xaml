@@ -1514,9 +1514,9 @@
                     </Border>
                     <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
                       <TextBlock Text="任务栏歌词" Style="{StaticResource RowTitle}" />
-                      <TextBlock Text="任务栏歌词功能暂未实现" Style="{StaticResource RowDescription}" />
+                      <TextBlock Text="在任务栏显示当前歌词、翻译和旋转封面" Style="{StaticResource RowDescription}" />
                     </StackPanel>
-                    <TextBlock Grid.Column="2" Text="未实现" Style="{StaticResource RowValue}" Margin="0,0,8,0" />
+                    <TextBlock Grid.Column="2" x:Name="TaskbarLyricsStatusText" Text="已关闭" Style="{StaticResource RowValue}" Margin="0,0,8,0" />
                     <FontIcon Grid.Column="3" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
                   </Grid>
                 </Button>
@@ -1583,14 +1583,67 @@
                 </StackPanel.RenderTransform>
                 <ContentControl Template="{StaticResource LyricsSettingsSubHeader}" Tag="任务栏歌词" />
                 <Border Style="{StaticResource SettingsCard}">
-                  <Grid Padding="16,18" ColumnSpacing="16">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-                    <StackPanel Spacing="5">
-                      <TextBlock Text="任务栏歌词暂未实现" Style="{StaticResource RowTitle}" />
-                      <TextBlock Text="当前仅支持在主界面的正在播放页查看同步歌词。" Style="{StaticResource RowDescription}" />
-                    </StackPanel>
-                    <TextBlock Grid.Column="1" Text="待开发" Style="{StaticResource RowValue}" VerticalAlignment="Center" />
-                  </Grid>
+                  <StackPanel Padding="16,18" Spacing="12">
+                    <Grid ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                      <StackPanel Spacing="4"><TextBlock Text="启用任务栏歌词" Style="{StaticResource RowTitle}" /><TextBlock Text="歌词与当前播放器同步；点击歌词可打开播放控制" Style="{StaticResource RowDescription}" /></StackPanel>
+                      <ToggleSwitch x:Name="TaskbarEnabledToggle" Grid.Column="1" Toggled="TaskbarSettings_Changed" Style="{StaticResource SettingsToggle}" AutomationProperties.Name="启用任务栏歌词" />
+                    </Grid>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel Padding="16,18" Spacing="16">
+                    <TextBlock Text="位置与尺寸" Style="{StaticResource RowTitle}" />
+                    <Grid ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="180" /></Grid.ColumnDefinitions>
+                      <TextBlock Text="贴靠位置" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+                      <ComboBox x:Name="TaskbarPositionCombo" Grid.Column="1" SelectionChanged="TaskbarSettings_Changed" HorizontalAlignment="Stretch"><ComboBoxItem Content="最左侧" Tag="left" /><ComboBoxItem Content="居中" Tag="center" /><ComboBoxItem Content="天气右侧" Tag="weather_right" /></ComboBox>
+                    </Grid>
+                    <StackPanel Spacing="4"><TextBlock Text="显示宽度" Style="{StaticResource RowTitle}" /><Slider x:Name="TaskbarWidthSlider" Minimum="180" Maximum="700" StepFrequency="10" ValueChanged="TaskbarSlider_Changed" /><TextBlock x:Name="TaskbarWidthText" Style="{StaticResource RowDescription}" /></StackPanel>
+                    <StackPanel Spacing="4"><TextBlock Text="水平偏移" Style="{StaticResource RowTitle}" /><Slider x:Name="TaskbarXOffsetSlider" Minimum="-200" Maximum="400" StepFrequency="2" ValueChanged="TaskbarSlider_Changed" /><TextBlock x:Name="TaskbarXOffsetText" Style="{StaticResource RowDescription}" /></StackPanel>
+                    <StackPanel Spacing="4"><TextBlock Text="垂直偏移" Style="{StaticResource RowTitle}" /><Slider x:Name="TaskbarYOffsetSlider" Minimum="-30" Maximum="30" StepFrequency="1" ValueChanged="TaskbarSlider_Changed" /><TextBlock x:Name="TaskbarYOffsetText" Style="{StaticResource RowDescription}" /></StackPanel>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel Padding="16,18" Spacing="16">
+                    <TextBlock Text="封面与歌词" Style="{StaticResource RowTitle}" />
+                    <Grid ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="显示封面" Style="{StaticResource RowTitle}" VerticalAlignment="Center" /><ToggleSwitch x:Name="TaskbarCoverToggle" Grid.Column="1" Toggled="TaskbarSettings_Changed" Style="{StaticResource SettingsToggle}" /></Grid>
+                    <Grid ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="封面旋转" Style="{StaticResource RowTitle}" VerticalAlignment="Center" /><ToggleSwitch x:Name="TaskbarRotateToggle" Grid.Column="1" Toggled="TaskbarSettings_Changed" Style="{StaticResource SettingsToggle}" /></Grid>
+                    <Grid ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="显示翻译" Style="{StaticResource RowTitle}" VerticalAlignment="Center" /><ToggleSwitch x:Name="TaskbarTranslationToggle" Grid.Column="1" Toggled="TaskbarSettings_Changed" Style="{StaticResource SettingsToggle}" /></Grid>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel Padding="16,18" Spacing="16">
+                    <TextBlock Text="文字与外观" Style="{StaticResource RowTitle}" />
+                    <Grid ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="180" /></Grid.ColumnDefinitions><TextBlock Text="文字颜色" Style="{StaticResource RowTitle}" VerticalAlignment="Center" /><ComboBox x:Name="TaskbarColorCombo" Grid.Column="1" SelectionChanged="TaskbarSettings_Changed" HorizontalAlignment="Stretch"><ComboBoxItem Content="跟随系统" Tag="system" /><ComboBoxItem Content="白色" Tag="white" /><ComboBoxItem Content="黑色" Tag="black" /><ComboBoxItem Content="自定义" Tag="custom" /></ComboBox></Grid>
+                    <StackPanel Spacing="4"><TextBox x:Name="TaskbarCustomColorBox" Header="自定义颜色（#RRGGBB）" TextChanged="TaskbarText_Changed" LostFocus="TaskbarText_LostFocus" /><TextBlock x:Name="TaskbarCustomColorError" Text="请输入 #RRGGBB 格式的颜色，例如 #1FD1E0。" Foreground="#D13438" TextWrapping="Wrap" Visibility="Collapsed" /></StackPanel>
+                    <StackPanel Spacing="4"><TextBox x:Name="TaskbarFontBox" Header="字体名称" TextChanged="TaskbarText_Changed" LostFocus="TaskbarText_LostFocus" /><TextBlock x:Name="TaskbarFontError" Text="找不到此字体，请输入已安装的字体名称。" Foreground="#D13438" TextWrapping="Wrap" Visibility="Collapsed" /></StackPanel>
+                    <StackPanel Spacing="4"><TextBlock Text="主歌词字号" Style="{StaticResource RowTitle}" /><Slider x:Name="TaskbarMainFontSlider" Minimum="10" Maximum="24" StepFrequency="1" ValueChanged="TaskbarSlider_Changed" /><TextBlock x:Name="TaskbarMainFontText" Style="{StaticResource RowDescription}" /></StackPanel>
+                    <StackPanel Spacing="4"><TextBlock Text="翻译字号" Style="{StaticResource RowTitle}" /><Slider x:Name="TaskbarSubFontSlider" Minimum="9" Maximum="20" StepFrequency="1" ValueChanged="TaskbarSlider_Changed" /><TextBlock x:Name="TaskbarSubFontText" Style="{StaticResource RowDescription}" /></StackPanel>
+                    <StackPanel Spacing="4"><TextBlock Text="字间距" Style="{StaticResource RowTitle}" /><Slider x:Name="TaskbarCharacterSpacingSlider" Minimum="-3" Maximum="1" StepFrequency="0.25" ValueChanged="TaskbarSlider_Changed" /><TextBlock x:Name="TaskbarCharacterSpacingText" Style="{StaticResource RowDescription}" /></StackPanel>
+                    <Grid ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="显示阴影遮罩" Style="{StaticResource RowTitle}" VerticalAlignment="Center" /><ToggleSwitch x:Name="TaskbarBackgroundToggle" Grid.Column="1" Toggled="TaskbarSettings_Changed" Style="{StaticResource SettingsToggle}" /></Grid>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel Padding="16,18" Spacing="16">
+                    <TextBlock Text="歌词动效" Style="{StaticResource RowTitle}" />
+                    <Grid ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="180" /></Grid.ColumnDefinitions>
+                      <TextBlock Text="切换动画" Style="{StaticResource RowTitle}" VerticalAlignment="Center" />
+                      <ComboBox x:Name="TaskbarAnimationCombo" Grid.Column="1" SelectionChanged="TaskbarSettings_Changed" HorizontalAlignment="Stretch">
+                        <ComboBoxItem Content="水平扫入" Tag="HorizontalSweep" />
+                        <ComboBoxItem Content="垂直滑入" Tag="SlideFade" />
+                        <ComboBoxItem Content="柔和淡入" Tag="FadeOnly" />
+                        <ComboBoxItem Content="无动画" Tag="None" />
+                      </ComboBox>
+                    </Grid>
+                    <StackPanel Spacing="4"><TextBlock Text="动画时长" Style="{StaticResource RowTitle}" /><Slider x:Name="TaskbarAnimationDurationSlider" Minimum="100" Maximum="600" StepFrequency="50" ValueChanged="TaskbarSlider_Changed" /><TextBlock x:Name="TaskbarAnimationDurationText" Style="{StaticResource RowDescription}" /></StackPanel>
+                  </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SettingsCard}">
+                  <StackPanel Padding="16,18" Spacing="16">
+                    <TextBlock Text="显示行为" Style="{StaticResource RowTitle}" />
+                    <Grid ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="随任务栏自动隐藏" Style="{StaticResource RowTitle}" VerticalAlignment="Center" /><ToggleSwitch x:Name="TaskbarAutoHideToggle" Grid.Column="1" Toggled="TaskbarSettings_Changed" Style="{StaticResource SettingsToggle}" /></Grid>
+                    <Grid ColumnSpacing="16"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions><TextBlock Text="全屏时隐藏" Style="{StaticResource RowTitle}" VerticalAlignment="Center" /><ToggleSwitch x:Name="TaskbarFullscreenToggle" Grid.Column="1" Toggled="TaskbarSettings_Changed" Style="{StaticResource SettingsToggle}" /></Grid>
+                    <TextBlock Text="鼠标滚轮可调节音量；右键歌词可返回设置。" Style="{StaticResource RowDescription}" />
+                  </StackPanel>
                 </Border>
               </StackPanel>
               <StackPanel x:Name="SettingsAppearance" Visibility="Collapsed" Spacing="10" VerticalAlignment="Top">

@@ -35,11 +35,12 @@ public sealed partial class MainWindow : Window
         _services = services;
         InitializeComponent();
 
+        ThemeHelper.ConfiguredTheme = services.Settings.Theme;
         var initialTheme = services.Settings.Theme switch
         {
             "Light" => ElementTheme.Light,
             "Dark" => ElementTheme.Dark,
-            _ => Root.ActualTheme
+            _ => (Application.Current?.RequestedTheme == ApplicationTheme.Dark || ThemeHelper.IsSystemAppDark()) ? ElementTheme.Dark : ElementTheme.Light
         };
         ThemeHelper.ActualTheme = initialTheme;
         if (services.Settings.Theme is "Light" or "Dark")
@@ -116,6 +117,7 @@ public sealed partial class MainWindow : Window
         UpdateAccountUi();
         UpdateStorageUi();
         ApplySettingsToUi();
+        InitializeTaskbarLyrics();
         RestoreQueueState();
         InitializeSystemMediaControls(hwnd);
 
@@ -172,6 +174,7 @@ public sealed partial class MainWindow : Window
             ThemeHelper.ActualTheme = Root.ActualTheme;
             UpdateTitleBarTheme();
             RefreshThemeOnActiveViews();
+            _taskbarOverlay?.NotifyThemeChanged();
         };
     }
 
@@ -336,6 +339,8 @@ public sealed partial class MainWindow : Window
     {
         if (_closing) return;
         _closing = true;
+        _taskbarOverlay?.Dispose();
+        _taskbarOverlay = null;
         System.Net.NetworkInformation.NetworkChange.NetworkAddressChanged -= OnNetworkAddressChanged;
         DisposeSystemMediaControls();
         _trayService?.Dispose();

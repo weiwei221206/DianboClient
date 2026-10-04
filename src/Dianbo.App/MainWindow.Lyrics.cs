@@ -109,6 +109,7 @@ public sealed partial class MainWindow : Window
         }
         UpdateLyricsVisibility(_services.Coordinator.CurrentSong is not null);
         UpdateCurrentLyric(_services.Coordinator.Snapshot.Position);
+        SyncTaskbarLyrics();
     }
 
     private void UpdateLyricsVisibility(bool hasSong)

@@ -7,14 +7,75 @@ namespace Dianbo.App;
 public static class ThemeHelper
 {
     private static ElementTheme _actualTheme = ElementTheme.Light;
+    private static string _configuredTheme = "Default";
+
+    public static string ConfiguredTheme
+    {
+        get => _configuredTheme;
+        set
+        {
+            if (_configuredTheme != value)
+            {
+                _configuredTheme = value ?? "Default";
+                ThemeChanged?.Invoke();
+            }
+        }
+    }
 
     public static ElementTheme ActualTheme
     {
         get => _actualTheme;
-        set => _actualTheme = value;
+        set
+        {
+            if (_actualTheme != value)
+            {
+                _actualTheme = value;
+                ThemeChanged?.Invoke();
+            }
+        }
     }
 
-    public static bool IsDark => _actualTheme == ElementTheme.Dark;
+    public static event Action? ThemeChanged;
+
+    public static bool IsDark => ResolveIsDark(_configuredTheme);
+
+    public static bool ResolveIsDark(string? configuredTheme = null)
+    {
+        var theme = configuredTheme ?? _configuredTheme;
+        if (string.Equals(theme, "Dark", StringComparison.OrdinalIgnoreCase)) return true;
+        if (string.Equals(theme, "Light", StringComparison.OrdinalIgnoreCase)) return false;
+
+        if (_actualTheme == ElementTheme.Dark) return true;
+        if (_actualTheme == ElementTheme.Light && !string.Equals(theme, "Default", StringComparison.OrdinalIgnoreCase)) return false;
+
+        return IsSystemAppDark();
+    }
+
+    public static bool IsSystemAppDark()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            if (key?.GetValue("AppsUseLightTheme") is int appsUseLight)
+                return appsUseLight == 0;
+            if (key?.GetValue("SystemUsesLightTheme") is int sysUseLight)
+                return sysUseLight == 0;
+        }
+        catch (Exception)
+        {
+        }
+
+        try
+        {
+            if (Application.Current?.RequestedTheme == ApplicationTheme.Dark)
+                return true;
+        }
+        catch (Exception)
+        {
+        }
+
+        return false;
+    }
 
 
     private static readonly SolidColorBrush DarkPrimary = new(Colors.White);

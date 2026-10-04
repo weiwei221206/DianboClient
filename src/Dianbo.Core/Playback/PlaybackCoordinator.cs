@@ -47,6 +47,8 @@ public sealed class PlaybackCoordinator
     private PlaybackMode _playMode = PlaybackMode.RepeatAll;
     private readonly IAudioCacheService? _cacheService;
     private readonly List<int> _shuffleHistory = [];
+    private readonly List<Song> _recommendationBuffer = [];
+    private int _prefetchInProgress;
     private bool _recommendationRadio;
 
     public bool IsRecommendationRadio => _recommendationRadio;
@@ -91,7 +93,22 @@ public sealed class PlaybackCoordinator
     public PlaybackSnapshot Snapshot => _snapshot;
     public IReadOnlyList<Song> Queue => _queue;
     public int QueueIndex => _queueIndex;
-    public Song? CurrentSong => _queueIndex >= 0 && _queueIndex < _queue.Count ? _queue[_queueIndex] : null;
+    public Song? CurrentSong
+    {
+        get
+        {
+            var queue = _queue;
+            var index = _queueIndex;
+            try
+            {
+                return index >= 0 && index < queue.Count ? queue[index] : null;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return null;
+            }
+        }
+    }
     public LyricDocument Lyrics { get; private set; } = LyricDocument.Empty;
     public int Volume => _volume;
 
@@ -125,6 +142,7 @@ public sealed class PlaybackCoordinator
             _queue = [.. songs];
             _queueIndex = Math.Clamp(index, 0, _queue.Count - 1);
             _recommendationRadio = false;
+            _recommendationBuffer.Clear();
             _shuffleHistory.Clear();
             if (mode.HasValue)
             {
@@ -172,6 +190,7 @@ public sealed class PlaybackCoordinator
             _queue = [.. songs];
             _queueIndex = index;
             _recommendationRadio = recommendationRadio;
+            if (!recommendationRadio) _recommendationBuffer.Clear();
             _shuffleHistory.Clear();
         }
         finally
@@ -224,6 +243,7 @@ public sealed class PlaybackCoordinator
                 _queue.Clear();
                 _queueIndex = -1;
                 _recommendationRadio = false;
+                _recommendationBuffer.Clear();
                 _shuffleHistory.Clear();
                 needStop = true;
             }
@@ -269,9 +289,10 @@ public sealed class PlaybackCoordinator
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            _queue.Clear();
+            _queue = [];
             _queueIndex = -1;
             _recommendationRadio = false;
+            _recommendationBuffer.Clear();
             _shuffleHistory.Clear();
         }
         finally
@@ -372,7 +393,7 @@ public sealed class PlaybackCoordinator
         }
         try
         {
-            var song = await FetchRecommendationAsync(new HashSet<long>(), null, request.Token).ConfigureAwait(false);
+            var (song, extra) = await FetchRecommendationWithExtraAsync(new HashSet<long>(), null, request.Token).ConfigureAwait(false);
             request.Token.ThrowIfCancellationRequested();
             if (song is null)
             {
@@ -386,6 +407,8 @@ public sealed class PlaybackCoordinator
                 lock (_requestSync)
                 {
                     if (request.IsCancellationRequested || _shuttingDown || expectedGeneration != _generation) return;
+                    _recommendationBuffer.Clear();
+                    _recommendationBuffer.AddRange(extra);
                     _queue = [song];
                     _queueIndex = 0;
                     _recommendationRadio = true;
@@ -407,26 +430,40 @@ public sealed class PlaybackCoordinator
         }
     }
 
-    private async Task<Song?> FetchRecommendationAsync(IReadOnlySet<long> recentIds, long? currentId, CancellationToken cancellationToken)
+    private async Task<(Song? Picked, List<Song> Extra)> FetchRecommendationWithExtraAsync(IReadOnlySet<long> recentIds, long? currentId, CancellationToken cancellationToken)
     {
         Song? fallback = null;
+        var fallbackExtra = new List<Song>();
+
         for (var attempt = 0; attempt < 5; attempt++)
         {
             var page = attempt == 4 ? 1 : Random.Shared.Next(1, 26);
             try
             {
                 var songs = await _api.GetRecommendSongsAsync(page, 20, cancellationToken).ConfigureAwait(false);
-                var candidates = songs.Where(song => song.Id > 0 && !recentIds.Contains(song.Id)).ToArray();
-                if (candidates.Length > 0) return candidates[Random.Shared.Next(candidates.Length)];
-                var older = songs.Where(song => song.Id > 0 && song.Id != currentId).ToArray();
-                if (older.Length > 0) fallback = older[Random.Shared.Next(older.Length)];
+                var candidates = songs.Where(song => song.Id > 0 && !recentIds.Contains(song.Id)).ToList();
+                if (candidates.Count > 0)
+                {
+                    var pickIndex = Random.Shared.Next(candidates.Count);
+                    var picked = candidates[pickIndex];
+                    candidates.RemoveAt(pickIndex);
+                    return (picked, candidates);
+                }
+                var older = songs.Where(song => song.Id > 0 && song.Id != currentId).ToList();
+                if (older.Count > 0 && fallback is null)
+                {
+                    var pickIndex = Random.Shared.Next(older.Count);
+                    fallback = older[pickIndex];
+                    older.RemoveAt(pickIndex);
+                    fallbackExtra = older;
+                }
             }
             catch (Exception error) when (error is not OperationCanceledException)
             {
                 break;
             }
         }
-        return fallback;
+        return (fallback, fallbackExtra);
     }
 
     public async Task TogglePauseAsync(CancellationToken cancellationToken)
@@ -1049,20 +1086,58 @@ public sealed class PlaybackCoordinator
         {
             HashSet<long> recentIds;
             long? currentId;
+            Song? recommendation = null;
+
             await _gate.WaitAsync(request.Token).ConfigureAwait(false);
             try
             {
                 if (!_recommendationRadio || _queue.Count == 0 || (!userInitiated && _snapshot.State != PlaybackState.Ended)) return;
                 recentIds = _queue.TakeLast(50).Select(song => song.Id).ToHashSet();
                 currentId = CurrentSong?.Id;
+
+                while (_recommendationBuffer.Count > 0)
+                {
+                    var candidate = _recommendationBuffer[0];
+                    _recommendationBuffer.RemoveAt(0);
+                    if (candidate.Id > 0 && !recentIds.Contains(candidate.Id) && candidate.Id != currentId)
+                    {
+                        recommendation = candidate;
+                        break;
+                    }
+                }
             }
             finally { _gate.Release(); }
 
-            Song? recommendation;
-            try { recommendation = await FetchRecommendationAsync(recentIds, currentId, request.Token).ConfigureAwait(false); }
-            catch (Exception error) when (error is not OperationCanceledException) { recommendation = null; }
-            request.Token.ThrowIfCancellationRequested();
+            if (recommendation is null)
+            {
+                try
+                {
+                    var (picked, extra) = await FetchRecommendationWithExtraAsync(recentIds, currentId, request.Token).ConfigureAwait(false);
+                    recommendation = picked;
+                    if (extra.Count > 0)
+                    {
+                        await _gate.WaitAsync(request.Token).ConfigureAwait(false);
+                        try
+                        {
+                            foreach (var s in extra)
+                            {
+                                if (s.Id > 0 && !recentIds.Contains(s.Id) && s.Id != recommendation?.Id && !_recommendationBuffer.Any(b => b.Id == s.Id))
+                                {
+                                    _recommendationBuffer.Add(s);
+                                }
+                            }
+                        }
+                        finally { _gate.Release(); }
+                    }
+                }
+                catch (Exception error) when (error is not OperationCanceledException)
+                {
+                    recommendation = null;
+                }
+                request.Token.ThrowIfCancellationRequested();
+            }
 
+            bool bufferNeedsReplenish = false;
             await _gate.WaitAsync(request.Token).ConfigureAwait(false);
             try
             {
@@ -1082,8 +1157,14 @@ public sealed class PlaybackCoordinator
                         _queueIndex = _queue.Count - 1;
                     }
                 }
+                bufferNeedsReplenish = _recommendationRadio && _recommendationBuffer.Count > 0 && _recommendationBuffer.Count < 5;
             }
             finally { _gate.Release(); }
+
+            if (bufferNeedsReplenish)
+            {
+                TryPrefetchRecommendations(expectedGeneration);
+            }
 
             if (recommendation is null)
             {
@@ -1102,6 +1183,60 @@ public sealed class PlaybackCoordinator
                 request.Dispose();
             }
         }
+    }
+
+    private void TryPrefetchRecommendations(long generation)
+    {
+        if (Interlocked.CompareExchange(ref _prefetchInProgress, 1, 0) != 0) return;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                if (generation != Volatile.Read(ref _generation) || !_recommendationRadio) return;
+
+                HashSet<long> recentIds;
+                long? currentId;
+                await _gate.WaitAsync().ConfigureAwait(false);
+                try
+                {
+                    if (!_recommendationRadio || _recommendationBuffer.Count >= 10) return;
+                    recentIds = _queue.TakeLast(50).Select(s => s.Id).ToHashSet();
+                    currentId = CurrentSong?.Id;
+                }
+                finally { _gate.Release(); }
+
+                var (picked, extra) = await FetchRecommendationWithExtraAsync(recentIds, currentId, CancellationToken.None).ConfigureAwait(false);
+
+                var candidates = new List<Song>();
+                if (picked is not null && !recentIds.Contains(picked.Id)) candidates.Add(picked);
+                candidates.AddRange(extra);
+
+                if (candidates.Count > 0 && generation == Volatile.Read(ref _generation))
+                {
+                    await _gate.WaitAsync().ConfigureAwait(false);
+                    try
+                    {
+                        if (!_recommendationRadio) return;
+                        foreach (var s in candidates)
+                        {
+                            if (s.Id > 0 && !recentIds.Contains(s.Id) && !_recommendationBuffer.Any(b => b.Id == s.Id))
+                            {
+                                _recommendationBuffer.Add(s);
+                            }
+                        }
+                    }
+                    finally { _gate.Release(); }
+                }
+            }
+            catch
+            {
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _prefetchInProgress, 0);
+            }
+        });
     }
 
     private async Task CancelObservationAsync()

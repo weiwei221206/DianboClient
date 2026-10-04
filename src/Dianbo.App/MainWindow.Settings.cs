@@ -54,6 +54,7 @@ public sealed partial class MainWindow : Window
             LyricFollowDelayText.Text = $"{Math.Clamp(_services.Settings.LyricFollowDelaySeconds, 2, 10)} 秒";
             LyricFollowDelaySlider.IsEnabled = _services.Settings.AutoFollowLyrics;
             ClickLyricToSeekToggle.IsOn = _services.Settings.ClickLyricToSeek;
+            ApplyTaskbarSettingsToUi();
             LyricsList.IsItemClickEnabled = _services.Settings.ClickLyricToSeek;
             AutoNavigateToNowPlayingToggle.IsOn = _services.Settings.AutoNavigateToNowPlayingOnPlay;
             SkipUnplayableToggle.IsOn = _services.Settings.AutoSkipUnplayable;
@@ -113,10 +114,12 @@ public sealed partial class MainWindow : Window
             _ => ElementTheme.Default
         };
 
+        ThemeHelper.ConfiguredTheme = theme;
         Root.RequestedTheme = elementTheme;
         ThemeHelper.ActualTheme = Root.ActualTheme;
         UpdateTitleBarTheme();
         RefreshThemeOnActiveViews();
+        _taskbarOverlay?.NotifyThemeChanged();
     }
 
     private void RefreshThemeOnActiveViews()

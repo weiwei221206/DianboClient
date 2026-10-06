@@ -78,7 +78,12 @@ public sealed partial class MainWindow : Window
 
     private void ApplyLyrics(LyricsChangedEventArgs args)
     {
+        if (_closing || !ReferenceEquals(args.Document, _services.Coordinator.Lyrics)) return;
+
         _lyricScrollRequest++;
+        // Stop the previous song's animated scroll before its containers are removed.
+        if (_lyricsScrollViewer is { } viewer)
+            viewer.ChangeView(null, viewer.VerticalOffset, null, disableAnimation: true);
         _isProgrammaticLyricScrolling = false;
         _programmaticLyricTargetOffset = null;
         _lastRenderedLyricIndex = -2;
@@ -172,35 +177,56 @@ public sealed partial class MainWindow : Window
 
     private void ScrollToCurrentLyric()
     {
-        if (_lyrics.Count == 0) return;
+        if (_closing || _lyrics.Count == 0 || !_isLyricsSubPageActive) return;
         var target = _lastRenderedLyricIndex;
         if (target < 0 || target >= _lyrics.Count) return;
 
         var request = ++_lyricScrollRequest;
         _isProgrammaticLyricScrolling = true;
         _programmaticLyricTargetOffset = null;
-        if (LyricsList.ContainerFromIndex(target) is null)
-            LyricsList.ScrollIntoView(_lyrics[target], ScrollIntoViewAlignment.Default);
-        _dispatcher.Post(() =>
+        // Post always runs inline on the UI thread. Use the queue explicitly so
+        // SizeChanged/collection notifications finish before requesting layout.
+        _dispatcher.PostDeferred(() =>
         {
-            if (request != _lyricScrollRequest || _isManualLyricBrowsing
-                || !_isLyricsSubPageActive) return;
-            var scrollViewer = _lyricsScrollViewer ??= FindVisualChild<ScrollViewer>(LyricsList);
-            LyricsList.UpdateLayout();
-            if (scrollViewer is null || LyricsList.ContainerFromIndex(target) is not FrameworkElement container)
+            if (!IsCurrentLyricScroll(request, target)) return;
+            if (LyricsList.ContainerFromIndex(target) is null)
             {
-                _isProgrammaticLyricScrolling = false;
-                _programmaticLyricTargetOffset = null;
-                return;
+                LyricsList.ScrollIntoView(_lyrics[target], ScrollIntoViewAlignment.Default);
             }
-
-            var top = container.TransformToVisual(scrollViewer)
-                .TransformPoint(new Windows.Foundation.Point(0, 0)).Y;
-            var centeredOffset = scrollViewer.VerticalOffset + top
-                + (container.ActualHeight - scrollViewer.ViewportHeight) / 2;
-            BeginLyricScrollAnimation(scrollViewer,
-                Math.Clamp(centeredOffset, 0, scrollViewer.ScrollableHeight));
+            // Allow realization to finish without recursively calling UpdateLayout.
+            _dispatcher.PostDeferred(() => CenterCurrentLyric(request, target),
+                Microsoft.UI.Dispatching.DispatcherQueuePriority.Low);
         });
+    }
+
+    private bool IsCurrentLyricScroll(int request, int target) =>
+        !_closing && request == _lyricScrollRequest && !_isManualLyricBrowsing
+        && _isLyricsSubPageActive && _currentPage == "playing"
+        && target >= 0 && target < _lyrics.Count;
+
+    private void CenterCurrentLyric(int request, int target)
+    {
+        if (!IsCurrentLyricScroll(request, target)) return;
+        var scrollViewer = _lyricsScrollViewer ??= FindVisualChild<ScrollViewer>(LyricsList);
+        if (scrollViewer is null || LyricsList.ContainerFromIndex(target) is not FrameworkElement container)
+        {
+            _isProgrammaticLyricScrolling = false;
+            _programmaticLyricTargetOffset = null;
+            return;
+        }
+
+        var top = container.TransformToVisual(scrollViewer)
+            .TransformPoint(new Windows.Foundation.Point(0, 0)).Y;
+        var centeredOffset = scrollViewer.VerticalOffset + top
+            + (container.ActualHeight - scrollViewer.ViewportHeight) / 2;
+        if (!double.IsFinite(centeredOffset) || !double.IsFinite(scrollViewer.ScrollableHeight))
+        {
+            _isProgrammaticLyricScrolling = false;
+            _programmaticLyricTargetOffset = null;
+            return;
+        }
+        BeginLyricScrollAnimation(scrollViewer,
+            Math.Clamp(centeredOffset, 0, scrollViewer.ScrollableHeight));
     }
 
     private void BeginLyricScrollAnimation(ScrollViewer scrollViewer, double targetOffset)
@@ -776,6 +802,8 @@ public sealed partial class MainWindow : Window
                 new PointerEventHandler(LyricsList_PointerWheelChanged), true);
             _lyricWheelHandlerAttached = true;
         }
+        if (_lyricsScrollViewer is not null)
+            _lyricsScrollViewer.ViewChanged -= LyricsScrollViewer_ViewChanged;
         _lyricsScrollViewer = FindVisualChild<ScrollViewer>(LyricsList);
         if (_lyricsScrollViewer is not null)
         {

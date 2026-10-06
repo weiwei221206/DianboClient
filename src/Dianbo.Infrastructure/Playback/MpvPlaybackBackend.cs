@@ -264,6 +264,7 @@ public sealed class MpvPlaybackBackend : IPlaybackBackend
                 case "end-file":
                     _pendingEndReason = MapEndReason(message);
                     _pendingEndDetail = DescribeEndFile(message, _pendingEndReason);
+                    _options.Log?.Invoke($"backend event=end-file generation={_generation} song={_songId} reason={_pendingEndReason}");
                     break;
                 case "start-file":
                 case "file-loaded":

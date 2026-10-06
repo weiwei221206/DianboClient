@@ -486,6 +486,7 @@ public sealed partial class MainWindow : Window
 
     private void ApplySnapshot(PlaybackSnapshot snapshot)
     {
+        if (_closing || snapshot.Generation != _services.Coordinator.Snapshot.Generation) return;
         var song = _services.Coordinator.CurrentSong;
         if (song?.Id != _lastSnapshotSongId)
         {
@@ -577,7 +578,10 @@ public sealed partial class MainWindow : Window
         CoverPlaceholderIcon.Visibility = string.IsNullOrWhiteSpace(cover) ? Visibility.Visible : Visibility.Collapsed;
 
         UpdateLyricsVisibility(hasSong);
-        UpdateCurrentLyric(snapshot.Position);
+        // EOF can report position zero after mpv unloads the file. Do not start
+        // scrolling the old lyrics back to the beginning while switching songs.
+        if (snapshot.State is PlaybackState.Playing or PlaybackState.Paused or PlaybackState.Seeking)
+            UpdateCurrentLyric(snapshot.Position);
         SyncTaskbarLyrics();
         UpdateSystemMediaControls(snapshot);
     }

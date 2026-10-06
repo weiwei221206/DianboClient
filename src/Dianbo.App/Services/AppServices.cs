@@ -254,16 +254,3 @@ public sealed class AppServices : IDisposable
         Log.Dispose();
     }
 }
-
-public sealed class UiDispatcher
-{
-    private readonly DispatcherQueue _queue;
-
-    public UiDispatcher(DispatcherQueue queue) => _queue = queue;
-
-    public void Post(Action action)
-    {
-        if (_queue.HasThreadAccess) action();
-        else _queue.TryEnqueue(() => action());
-    }
-}

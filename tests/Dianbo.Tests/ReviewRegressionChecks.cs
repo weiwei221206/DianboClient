@@ -22,6 +22,7 @@ public static class ReviewRegressionChecks
             try { await action().WaitAsync(TimeSpan.FromSeconds(12)); results.Add((name, null)); }
             catch (Exception error) { results.Add((name, error.ToString())); }
         }
+        await Test("界面更新延后执行且异常不逃逸到原生回调", UiDispatcherChecks.RunAsync);
         await Test("相对路径与凭据字段脱敏", () =>
         {
             var text = RedactedLog.Sanitize("auth path=ucenter/users/pub/123?token=SECRET&uid=123 qrCode=QRTICKET http=200");

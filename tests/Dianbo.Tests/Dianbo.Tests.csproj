@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../src/Dianbo.App/ViewModels/SearchViewModel.cs" Link="SearchViewModel.cs" />
+    <Compile Include="../../src/Dianbo.App/Services/UiDispatcher.cs" Link="UiDispatcher.cs" />
     <ProjectReference Include="..\..\src\Dianbo.Core\Dianbo.Core.csproj" />
     <ProjectReference Include="..\..\src\Dianbo.Infrastructure\Dianbo.Infrastructure.csproj" />
   </ItemGroup>

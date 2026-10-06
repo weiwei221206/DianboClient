@@ -1304,7 +1304,7 @@
                       <TextBlock Text="关于点波音乐" Style="{StaticResource RowTitle}" />
                       <TextBlock Text="项目地址、使用说明与版本信息" Style="{StaticResource RowDescription}" />
                     </StackPanel>
-                    <TextBlock Grid.Column="2" Text="1.0.1" Style="{StaticResource RowValue}" Margin="0,0,8,0" />
+                    <TextBlock Grid.Column="2" Text="1.0.3" Style="{StaticResource RowValue}" Margin="0,0,8,0" />
                     <FontIcon Grid.Column="3" Glyph="&#xE76C;" FontSize="12" Style="{StaticResource RowIcon}" />
                   </Grid>
                 </Button>
@@ -1730,7 +1730,7 @@
                       <Image Width="48" Height="48" Source="ms-appx:///Assets/logo.png" Stretch="UniformToFill" />
                       <StackPanel VerticalAlignment="Center" Spacing="3">
                         <TextBlock Text="点波音乐" Style="{StaticResource RowTitle}" FontSize="18" />
-                        <TextBlock Text="版本 1.0.1" Style="{StaticResource RowDescription}" />
+                        <TextBlock Text="版本 1.0.3" Style="{StaticResource RowDescription}" />
                       </StackPanel>
                     </StackPanel>
                   </StackPanel>
